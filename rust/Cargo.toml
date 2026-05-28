@@ -1,0 +1,55 @@
+[package]
+name = "prism_dsp"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "prism_dsp"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.12.0"
+
+# Audio plumbing
+ringbuf = "0.4"
+crossbeam-channel = "0.5"
+parking_lot = "0.12"
+
+# Logging — base abstraction available everywhere
+log = "0.4"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Errors
+thiserror = "2"
+anyhow = "1"
+
+# File I/O for WAV
+hound = "3.5"
+
+# Time
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+
+# Android-only deps
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.21", default-features = false }
+android_logger = { version = "0.14", default-features = false }
+
+# iOS-only deps. `oslog` pulls a C wrapper against the Apple <os/log.h> framework,
+# so it cannot be a top-level dep — that breaks host (Linux/macOS) builds.
+[target.'cfg(target_os = "ios")'.dependencies]
+oslog = { version = "0.2", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
+[profile.dev]
+opt-level = 1
+debug = true

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /home/anbu/26_class/Prism log --oneline -20)",
+      "Bash(ls -la /home/anbu/26_class/Prism/ 2>&1; echo \"---MEMORY---\"; ls /home/anbu/.claude/projects/-home-anbu/memory/ 2>&1; echo \"---MEMORY MD---\"; cat /home/anbu/.claude/projects/-home-anbu/memory/MEMORY.md 2>&1 | head -100)",
+      "Read(//home/anbu/.claude/projects/-home-anbu/memory/**)",
+      "Bash(flutter --version)",
+      "Bash(cargo --version)",
+      "Bash(rustc --version)",
+      "Bash(flutter create *)",
+      "Bash(xargs ls -la)",
+      "Bash(chmod +x /home/anbu/26_class/Prism/scripts/*.sh)",
+      "Bash(grep -v '\\\\.gitignore$\\\\|gradlew\\\\|gradlew.bat\\\\|\\\\.iml$\\\\|local\\\\.properties')",
+      "Bash(nohup bash -c \"./scripts/setup.sh > /tmp/prism_setup.log 2>&1\")",
+      "Bash(echo \"Setup PID: $!\")",
+      "Bash(flutter analyze *)",
+      "Bash(tail -50 /tmp/prism_setup.log 2>&1; echo \"---\"; which cargo rustc flutter_rust_bridge_codegen cargo-ndk 2>&1; echo \"---\"; ls ~/.cargo/bin/ 2>&1)",
+      "Read(//home/anbu/.cargo/bin/**)",
+      "Bash(grep -rn \"pub use\" ~/.cargo/registry/src/index.crates.io-*/flutter_rust_bridge-2.12.0/src/lib.rs 2>&1 | head -20; echo \"---\"; grep -rn \"StreamSink\" ~/.cargo/registry/src/index.crates.io-*/flutter_rust_bridge-2.12.0/src/lib.rs 2>&1 | head -10)",
+      "Read(//home/anbu/.cargo/registry/src/**)",
+      "Bash(flutter test *)",
+      "Bash(flutter build *)"
+    ]
+  }
+}

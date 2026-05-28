@@ -1,0 +1,33 @@
+name: prism
+description: "PRISM — Perceptual Recognition Intelligence for Sound Meaning (Phase 0 skeleton)"
+publish_to: 'none'
+version: 0.0.1+1
+
+environment:
+  sdk: ^3.11.3
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  flutter_rust_bridge: ^2.12.0
+
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.4
+  flutter_local_notifications: ^17.2.3
+  rxdart: ^0.28.0
+  freezed_annotation: ^2.4.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  ffigen: ^14.0.0
+
+flutter:
+  uses-material-design: true
