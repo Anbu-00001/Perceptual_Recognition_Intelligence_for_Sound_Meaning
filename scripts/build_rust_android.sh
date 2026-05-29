@@ -23,15 +23,41 @@ if [ -f "$HOME/.cargo/env" ]; then
 fi
 
 if [ -z "${ANDROID_NDK_HOME:-}" ]; then
-    # Fallback: read from local.properties
+    # Fallback 1: read from local.properties (populated by setup.sh).
     NDK_FROM_PROPS=$(grep -E "^ndk.dir=" "$ROOT/android/local.properties" 2>/dev/null | cut -d= -f2- || true)
     if [ -n "$NDK_FROM_PROPS" ]; then
         export ANDROID_NDK_HOME="$NDK_FROM_PROPS"
-    else
-        echo "ANDROID_NDK_HOME not set and ndk.dir not in android/local.properties." >&2
-        echo "Run ./scripts/setup.sh first." >&2
-        exit 1
     fi
+fi
+
+if [ -z "${ANDROID_NDK_HOME:-}" ]; then
+    # Fallback 2: auto-discover the highest-numbered NDK at the standard locations.
+    # This makes `build_rust_android.sh` usable straight after Android Studio
+    # installs an NDK, without re-running setup.sh.
+    for SDK_ROOT in \
+        "${ANDROID_HOME:-}" \
+        "${ANDROID_SDK_ROOT:-}" \
+        "$HOME/Android/Sdk" \
+        "$HOME/Library/Android/sdk" \
+        "/usr/local/lib/android/sdk" \
+        "/opt/android-sdk"; do
+        [ -z "$SDK_ROOT" ] && continue
+        [ -d "$SDK_ROOT/ndk" ] || continue
+        CAND=$(ls -1 "$SDK_ROOT/ndk" 2>/dev/null | sort -V | tail -n1)
+        if [ -n "$CAND" ] && [ -d "$SDK_ROOT/ndk/$CAND" ]; then
+            export ANDROID_NDK_HOME="$SDK_ROOT/ndk/$CAND"
+            echo "==> Auto-detected NDK at $ANDROID_NDK_HOME"
+            break
+        fi
+    done
+fi
+
+if [ -z "${ANDROID_NDK_HOME:-}" ]; then
+    echo "ANDROID_NDK_HOME not set; ndk.dir missing from android/local.properties;" >&2
+    echo "and no NDK found at the standard SDK locations." >&2
+    echo "Install one via Android Studio (SDK Manager → SDK Tools → NDK)" >&2
+    echo "or run ./scripts/setup.sh." >&2
+    exit 1
 fi
 
 echo "==> Building prism_dsp for Android (profile: $PROFILE_DIR)"

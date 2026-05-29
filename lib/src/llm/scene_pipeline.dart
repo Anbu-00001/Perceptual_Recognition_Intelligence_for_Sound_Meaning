@@ -25,11 +25,19 @@ class ScenePipeline {
     required this.embeddings,
     required this.reasoner,
     String environment = 'home',
+    this.minSlowPathInterval = const Duration(seconds: 3),
   }) : _environment = environment;
 
   final EmbeddingStore embeddings;
   final GemmaAudioReasoner reasoner;
   String _environment;
+
+  /// Minimum gap between Gemma3n inferences. On a memory-tight phone like the
+  /// OPPO A18 we widen this to 5 s so the NPU/CPU has time to release before
+  /// the next event arrives, otherwise the foreground service gets killed by
+  /// HansManager for sustained high memory.
+  final Duration minSlowPathInterval;
+  DateTime _lastSlowPathAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   String get environment => _environment;
 
@@ -79,6 +87,14 @@ class ScenePipeline {
 
   Future<void> _maybeSlowPath(rust_dsp.DspEvent ev, MatchResult match) async {
     if (_slowPathBusy) return;
+    // Tier-aware throttle. Without this, an event burst on a low-tier device
+    // (e.g. ten knocks in a row) queues ten Gemma3n inferences and the foreground
+    // service crosses the OPPO HansManager memory threshold.
+    final since = DateTime.now().difference(_lastSlowPathAt);
+    if (since < minSlowPathInterval) {
+      _controller.add(SceneEvent.fromFastPath(ev, match));
+      return;
+    }
     _slowPathBusy = true;
     try {
       final audio = rust_dsp.takeEventAudio16K(eventId: ev.eventId);
@@ -90,6 +106,7 @@ class ScenePipeline {
         event: ev,
         audio16kMono: Int16List.fromList(audio),
       );
+      _lastSlowPathAt = DateTime.now();
       _controller.add(SceneEvent.fromSlowPath(ev, verdict, match));
     } catch (e) {
       _controller.add(SceneEvent.fromError(ev, e));

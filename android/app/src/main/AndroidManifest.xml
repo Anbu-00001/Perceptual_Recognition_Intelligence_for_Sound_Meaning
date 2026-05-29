@@ -10,6 +10,14 @@
     <!-- Android 13+ requires runtime POST_NOTIFICATIONS for the foreground notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- WakeLock so the audio thread keeps running under ColorOS HansManager / Doze.
+         Without this the OPPO A18 freezes the foreground service after ~30 s of screen-off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Surfaces the "ignore battery optimizations" system dialog. The intent we fire is
+         only the standard request; users can still decline, and the app degrades gracefully. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <!-- Sensors are zero-permission on Android but declared for clarity / Play Store metadata -->
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />

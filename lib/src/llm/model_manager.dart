@@ -1,5 +1,7 @@
 import 'package:flutter_gemma/flutter_gemma.dart';
 
+import '../audio/device_profile.dart';
+
 /// Coordinates download + install of the three model families PRISM needs.
 ///
 /// Models are downloaded from HuggingFace litert-community on first run, cached
@@ -13,9 +15,16 @@ import 'package:flutter_gemma/flutter_gemma.dart';
 /// All install URLs are HuggingFace; user provides their HF token via env / Secure
 /// Storage (Phase 7 productization). For Phase 1 dev runs, paste it into [hfToken].
 class ModelManager {
-  ModelManager({this.hfToken = ''});
+  ModelManager({this.hfToken = '', this.profile = DeviceProfile.unknown});
 
   final String hfToken;
+  final DeviceProfile profile;
+
+  /// Refuses to install DeepSeek on memory-tight devices. Calling
+  /// [ensureDeepSeek] on a low-tier phone returns false without touching the
+  /// network — the OPPO A18-class hardware (4 GB / 4 GB virtual) would OOM
+  /// at runtime even if the install succeeded.
+  bool get canRunDeepSeek => !profile.memoryTier.skipDeepSeek;
 
   /// Confirmed by inspecting flutter_gemma v0.16.1 example folder.
   static const _gemma3nUrl =
@@ -33,10 +42,15 @@ class ModelManager {
     ).fromNetwork(_gemma3nUrl, token: hfToken).withProgress(onProgress).install();
   }
 
-  Future<void> ensureDeepSeek(void Function(int progress) onProgress) async {
+  /// Returns `true` if install ran, `false` if skipped due to memory tier.
+  Future<bool> ensureDeepSeek(void Function(int progress) onProgress) async {
+    if (!canRunDeepSeek) {
+      return false;
+    }
     await FlutterGemma.installModel(
       modelType: ModelType.deepSeek,
     ).fromNetwork(_deepseekUrl, token: hfToken).withProgress(onProgress).install();
+    return true;
   }
 
   Future<void> ensureEmbedder({

@@ -1,17 +1,42 @@
 import 'package:flutter/material.dart';
 
+import 'src/audio/device_profile.dart';
+import 'src/diag/startup_profiler.dart';
 import 'src/rust/frb_generated.dart';
 import 'src/ui/home_screen.dart';
 
 Future<void> main() async {
+  final profiler = StartupProfiler();
+  profiler.mark('main_entered');
+
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize the Rust runtime. This loads the cdylib and sets up the FRB dispatch.
+  profiler.mark('widgets_binding_ready');
+
   await RustLib.init();
-  runApp(const PrismApp());
+  profiler.mark('rust_lib_init');
+
+  // Device profile is fetched off the critical path — runApp doesn't await it.
+  // The home screen consumes the future and shows a banner if needed.
+  final deviceProfileFuture = DeviceProfileService.fetch();
+  profiler.mark('device_profile_kicked_off');
+
+  runApp(PrismApp(
+    profiler: profiler,
+    deviceProfileFuture: deviceProfileFuture,
+  ));
+  profiler.mark('run_app_returned');
+  profiler.dump();
 }
 
 class PrismApp extends StatelessWidget {
-  const PrismApp({super.key});
+  const PrismApp({
+    super.key,
+    this.profiler,
+    this.deviceProfileFuture,
+  });
+
+  final StartupProfiler? profiler;
+  final Future<DeviceProfile>? deviceProfileFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -24,14 +49,13 @@ class PrismApp extends StatelessWidget {
           seedColor: const Color(0xFF6A4FE5),
           brightness: Brightness.dark,
         ),
-        // Accessibility defaults: high contrast, generous tap targets.
         textTheme: const TextTheme(
           bodyMedium: TextStyle(fontSize: 16),
           titleLarge: TextStyle(fontWeight: FontWeight.w600),
         ),
         visualDensity: VisualDensity.standard,
       ),
-      home: const HomeScreen(),
+      home: HomeScreen(deviceProfileFuture: deviceProfileFuture),
     );
   }
 }

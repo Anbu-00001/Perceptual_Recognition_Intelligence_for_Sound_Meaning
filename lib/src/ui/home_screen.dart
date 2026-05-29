@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../audio/audio_service.dart';
+import '../audio/device_profile.dart';
 import '../perm/permission_gate.dart';
 import '../rust/api/audio_stream.dart' show WaveformFrame;
 import '../rust/api/session.dart' show SessionPaths;
@@ -11,7 +12,9 @@ import 'waveform_painter.dart';
 /// Phase 0 acceptance UI: one screen, two buttons, live stereo waveform.
 /// Recording produces a `session_<ts>.wav` + `imu_<ts>.csv` in app documents directory.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.deviceProfileFuture});
+
+  final Future<DeviceProfile>? deviceProfileFuture;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _recording = false;
   SessionPaths? _lastSession;
   String? _error;
+  DeviceProfile? _profile;
+  bool _ignoringBatteryOpt = false;
+  bool _batteryBannerDismissed = false;
 
   @override
   void initState() {
@@ -35,6 +41,40 @@ class _HomeScreenState extends State<HomeScreen> {
       (f) => _frameNotifier.value = f,
       onError: (e) => setState(() => _error = e.toString()),
     );
+    _loadDiagnostics();
+  }
+
+  Future<void> _loadDiagnostics() async {
+    final f = widget.deviceProfileFuture;
+    if (f == null) return;
+    final p = await f;
+    final battery = await DeviceProfileService.isIgnoringBatteryOpt();
+    if (!mounted) return;
+    setState(() {
+      _profile = p;
+      _ignoringBatteryOpt = battery;
+    });
+  }
+
+  /// Re-pulls the device profile from the native side. Used after startCapture
+  /// so the audio-source line shows the source the ladder actually selected
+  /// instead of the initial "none" placeholder.
+  Future<void> _refreshProfile() async {
+    final p = await DeviceProfileService.fetch();
+    if (!mounted) return;
+    setState(() => _profile = p);
+  }
+
+  Future<void> _requestBatteryOpt() async {
+    await DeviceProfileService.requestIgnoreBatteryOpt();
+    // The system dialog is fire-and-forget; the user may switch back without
+    // confirming. Re-check the next time we're foreground (didChangeAppLifecycleState
+    // would also work but the home-screen Resume re-check is good enough here).
+    Future<void>.delayed(const Duration(seconds: 1), () async {
+      if (!mounted) return;
+      final v = await DeviceProfileService.isIgnoringBatteryOpt();
+      if (mounted) setState(() => _ignoringBatteryOpt = v);
+    });
   }
 
   @override
@@ -59,6 +99,10 @@ class _HomeScreenState extends State<HomeScreen> {
           return;
         }
         await _service.startCapture();
+        // The audio-source ladder picks at startCapture() time. Re-fetch
+        // diagnostics so the UI shows the actual source (not the "none" we
+        // had at first launch before any capture had run).
+        unawaited(_refreshProfile());
       }
       setState(() => _capturing = !_capturing);
     } catch (e) {
@@ -153,6 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
               _legend(),
               const SizedBox(height: 16),
+              if (_shouldShowBatteryBanner()) _batteryOptBanner(theme),
+              if (_capturing && _profile != null) _audioSourceLine(theme),
               if (_error != null)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -222,6 +268,67 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 6),
         Text(label),
       ],
+    );
+  }
+
+  bool _shouldShowBatteryBanner() {
+    final p = _profile;
+    if (p == null || _batteryBannerDismissed || _ignoringBatteryOpt) return false;
+    return p.isOemAggressive;
+  }
+
+  Widget _batteryOptBanner(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade900.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade700),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Your ${_profile?.manufacturer ?? 'device'} may kill PRISM in the background.',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Disable battery optimization for PRISM so the foreground mic stays alive '
+            'when the screen turns off.',
+            style: TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              FilledButton.tonal(
+                onPressed: _requestBatteryOpt,
+                child: const Text('Open settings'),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => setState(() => _batteryBannerDismissed = true),
+                child: const Text('Not now'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _audioSourceLine(ThemeData theme) {
+    final p = _profile!;
+    final detail = p.hasUnprocessedPath
+        ? 'mic source: ${p.audioSource} · best quality available'
+        : 'mic source: ${p.audioSource} · device does not expose UNPROCESSED; spatial features degraded';
+    final color = p.hasUnprocessedPath
+        ? theme.colorScheme.onSurfaceVariant
+        : Colors.amber.shade400;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(detail, style: TextStyle(color: color, fontSize: 12)),
     );
   }
 }

@@ -152,14 +152,17 @@ fn gcc_phat_resolves_left_vs_right() {
 }
 
 #[test]
-fn gcc_phat_resolves_center_for_identical_channels() {
+fn gcc_phat_resolves_unknown_for_identical_channels() {
+    // Phase 1 hardening: identical L/R is the single-mic-replicated-stereo case
+    // common on budget phones (e.g. OPPO A18). We must NOT claim a strong centered
+    // source — return Unknown instead so the UI can be honest with the user.
     let n = STFT_N;
     let s: Vec<f32> = sine(1_000.0, n, 0.5);
     let est = spatial_estimate(&s, &s, SR);
     assert!(
-        matches!(est.zone, SpatialZone::Center),
-        "expected Center for identical channels, got {:?} angle={}",
+        matches!(est.zone, SpatialZone::Unknown),
+        "expected Unknown for identical channels, got {:?} angle={}",
         est.zone, est.angle_deg
     );
-    assert_eq!(est.tdoa_samples, 0);
+    assert!(est.mono_replicated);
 }

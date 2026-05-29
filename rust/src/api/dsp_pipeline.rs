@@ -56,6 +56,7 @@ impl From<SpatialZone> for Zone {
             SpatialZone::Left => Zone::Left,
             SpatialZone::Right => Zone::Right,
             SpatialZone::Center => Zone::Center,
+            SpatialZone::Unknown => Zone::Unknown,
         }
     }
 }

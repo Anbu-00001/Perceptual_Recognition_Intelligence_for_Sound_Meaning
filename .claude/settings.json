@@ -40,11 +40,23 @@
       "Bash(awk '{print $2}')",
       "Bash(xargs -r kill -9)",
       "Bash(cargo --manifest-path rust/Cargo.toml test --lib)",
-      "Bash(cargo --manifest-path rust/Cargo.toml test --tests)"
+      "Bash(cargo --manifest-path rust/Cargo.toml test --tests)",
+      "Bash(export ANDROID_NDK_HOME=/home/anbu/Android/Sdk/ndk/28.2.13676358)",
+      "Bash(adb shell *)",
+      "Bash(nm -D --defined-only android/app/src/main/jniLibs/arm64-v8a/libprism_dsp.so)",
+      "Bash(adb install *)",
+      "Bash(adb logcat *)",
+      "Bash(grep -vE \"Backend.*ANGLE|GraphicBuffer|SurfaceTextureClient|Choreographer|^I/flutter.*$\")",
+      "Bash(mkdir -p /tmp/prism_verify)",
+      "Bash(adb pull *)",
+      "Bash(dd if=/tmp/prism_verify/session.wav bs=1 skip=4000 count=60)",
+      "Bash(flutter devices *)",
+      "Bash(unset ANDROID_NDK_HOME)"
     ],
     "additionalDirectories": [
       "/home/anbu/26_class/Prism/lib/src/rust/api",
-      "/home/anbu/.claude/projects/-home-anbu/memory"
+      "/home/anbu/.claude/projects/-home-anbu/memory",
+      "/tmp/prism_verify"
     ]
   }
 }
