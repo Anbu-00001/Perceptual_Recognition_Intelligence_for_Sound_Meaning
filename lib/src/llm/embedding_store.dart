@@ -5,6 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../enrollment/enrollment_service.dart' show DocumentEmbedder;
+
 /// Fast-path matcher + per-environment longitudinal store backed by qdrant-edge
 /// (flutter_gemma 0.16+ default vector store).
 ///
@@ -25,7 +27,7 @@ import 'package:path_provider/path_provider.dart';
 ///      anchors" after a clear-and-rebuild.
 ///   3. Environment-aware search filters: must=collection,environment for the
 ///      personal hit, then a fallback search over anchors without environment.
-class EmbeddingStore {
+class EmbeddingStore implements DocumentEmbedder {
   EmbeddingStore({
     String anchorAssetPath = 'assets/anchor_seeds.json',
     String? overrideDirectory,
@@ -108,6 +110,7 @@ class EmbeddingStore {
   /// Generate a query embedding using the document-side prefix. Useful for
   /// callers that want to compare two captions in cosine space (e.g. the
   /// prototype repository computing per-sample vectors before averaging).
+  @override
   Future<List<double>> embedAsDocument(String text) async {
     final embedder = await _embedder();
     return embedder.generateEmbedding(text, taskType: TaskType.retrievalDocument);

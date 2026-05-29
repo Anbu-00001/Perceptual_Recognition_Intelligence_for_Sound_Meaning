@@ -19,7 +19,14 @@ import '../llm/gemma_audio_wav.dart';
 /// objective. Keeping captions stylistically uniform tightens the cosine
 /// neighborhood of the centroid; chatty captions add variance that hurts
 /// recall.
-class CaptionGenerator {
+///
+/// The abstract [Captioner] interface lets tests bypass Gemma3n entirely.
+abstract interface class Captioner {
+  Future<void> warmup();
+  Future<String> caption({required Int16List pcm16k, String? userLabelHint});
+}
+
+class CaptionGenerator implements Captioner {
   CaptionGenerator(this._models, {this.maxTokens = 96});
 
   final ModelManager _models;
@@ -34,6 +41,7 @@ and any spatial cues you can hear. Do NOT use the words "I" or "you".
 Do NOT speculate on intent. Do NOT add prose. Output the sentence only.
 ''';
 
+  @override
   Future<void> warmup() async {
     final model = await _models.getActiveModel(maxTokens: maxTokens);
     _chat = await model.createChat(
@@ -46,6 +54,7 @@ Do NOT speculate on intent. Do NOT add prose. Output the sentence only.
 
   /// Generate one caption for [pcm16k]. Returns an empty string on failure;
   /// the caller treats that as "embed the user-typed label instead".
+  @override
   Future<String> caption({
     required Int16List pcm16k,
     String? userLabelHint,

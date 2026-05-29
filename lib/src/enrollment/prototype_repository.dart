@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../llm/embedding_store.dart';
 import 'prototype.dart';
+import 'prototype_vector_mirror.dart';
 
 /// Persists [SoundPrototype]s in a sidecar JSON file and keeps qdrant-edge in
 /// sync. The sidecar is the source of truth — qdrant-edge is regenerable.
@@ -19,11 +19,18 @@ import 'prototype.dart';
 /// that without a sidecar would mean re-recording.
 class PrototypeRepository {
   PrototypeRepository({
-    required this.store,
+    EmbeddingStore? store,
+    PrototypeVectorMirror? mirror,
     String? overrideDirectory,
-  }) : _overrideDir = overrideDirectory;
+  })  : _mirror = mirror ??
+            QdrantPrototypeVectorMirror(
+              store ??
+                  (throw ArgumentError(
+                      'PrototypeRepository requires either store or mirror')),
+            ),
+        _overrideDir = overrideDirectory;
 
-  final EmbeddingStore store;
+  final PrototypeVectorMirror _mirror;
   final String? _overrideDir;
 
   static const String _fileName = 'enrollment_store.json';
@@ -76,7 +83,7 @@ class PrototypeRepository {
     proto.rebuildCentroid();
     _byId[proto.id] = proto;
     await _persistSidecar();
-    await _pushToVectorStore(proto);
+    await _mirror.upsert(proto);
     _changes.add(null);
   }
 
@@ -110,7 +117,7 @@ class PrototypeRepository {
     if (!_byId.containsKey(prototypeId)) return;
     _byId.remove(prototypeId);
     await _persistSidecar();
-    await _rebuildVectorStoreFromSidecar();
+    await _mirror.rebuildFrom(_byId.values);
     _changes.add(null);
   }
 
@@ -127,31 +134,5 @@ class PrototypeRepository {
       await dir.create(recursive: true);
     }
     return File('${dir.path}/$_fileName');
-  }
-
-  Future<void> _pushToVectorStore(SoundPrototype proto) async {
-    if (proto.centroid.isEmpty) return;
-    await FlutterGemmaPlugin.instance.addDocumentWithEmbedding(
-      id: proto.id,
-      content: proto.label,
-      embedding: proto.centroid,
-      metadata: jsonEncode({
-        'collection': EmbeddingStore.personalCollection,
-        'category': proto.category,
-        'environment': proto.environment,
-        'spatial_zone': proto.spatialZone,
-        'prototype_id': proto.id,
-        'sample_count': proto.samples.length,
-        'last_trained_at': proto.lastTrainedAt?.toIso8601String(),
-      }),
-    );
-  }
-
-  Future<void> _rebuildVectorStoreFromSidecar() async {
-    await store.clearAndReseedAnchorsAfter(() async {
-      for (final p in _byId.values) {
-        await _pushToVectorStore(p);
-      }
-    });
   }
 }

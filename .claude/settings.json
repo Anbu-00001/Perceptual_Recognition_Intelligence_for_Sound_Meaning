@@ -34,7 +34,13 @@
       "Bash(nm -D --defined-only /home/anbu/26_class/Prism/rust/target/release/libprism_dsp.so)",
       "Bash(awk '{print $5}')",
       "Bash(sed -i 's/strip = \"symbols\"/strip = \"debuginfo\"/' Cargo.toml)",
-      "Bash(nm -D --defined-only rust/target/release/libprism_dsp.so)"
+      "Bash(nm -D --defined-only rust/target/release/libprism_dsp.so)",
+      "Bash(pkill -f \"flutter test\")",
+      "Bash(kill -9 30682 30726 30738)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -r kill -9)",
+      "Bash(cargo --manifest-path rust/Cargo.toml test --lib)",
+      "Bash(cargo --manifest-path rust/Cargo.toml test --tests)"
     ],
     "additionalDirectories": [
       "/home/anbu/26_class/Prism/lib/src/rust/api",

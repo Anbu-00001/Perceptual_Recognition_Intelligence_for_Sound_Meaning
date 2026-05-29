@@ -39,6 +39,7 @@ run_integration() {
     flutter test integration_test/app_boots_test.dart
     flutter test integration_test/dsp_event_flow_test.dart
     flutter test integration_test/scene_pipeline_test.dart
+    flutter test integration_test/enrollment_flow_test.dart
 }
 
 run_patrol() {

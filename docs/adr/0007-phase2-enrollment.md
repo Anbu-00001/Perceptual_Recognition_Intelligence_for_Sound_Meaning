@@ -129,4 +129,9 @@ plumbed. Phase 2 unit-level proof:
 - 6 Dart anchor-seed validity tests in `test/src/enrollment/anchor_seeds_test.dart`.
 - 3 Dart category-taxonomy tests in `test/src/enrollment/categories_test.dart`.
 
-All pass headlessly. Total host tests rises from 28 (Phase 1) to 56.
+All pass headlessly. Total host tests rises from 28 (Phase 1) to 56 at the
+end of the Phase 2 build, then to **78** once the Phase 2 verification pass
+adds the EnrollmentService orchestration (6), PrototypeRepository
+sidecar/mirror roundtrip (7), library-screen widget (1 active + 1 skipped),
+Rust tap data-path (4 inline + 4 integration) tests, and a dedicated
+on-device `enrollment_flow_test.dart` for the recorder lifecycle.

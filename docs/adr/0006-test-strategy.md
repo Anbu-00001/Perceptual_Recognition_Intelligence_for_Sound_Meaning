@@ -27,6 +27,44 @@ Each layer is an **independent** entry point — none of them imports the
 fixtures of another. This is deliberate. When one fails it must be obvious
 which boundary broke.
 
+## What's in the tree as of Phase 2
+
+- **Rust:** 29 tests across `dsp_smoke.rs`, `ring_concurrent.rs`,
+  `pipeline_smoke.rs`, `enrollment_tap.rs` (recorder lifecycle), plus
+  in-source `vad`, `enrollment`, and `tap_tests` units. Inline tests that
+  share global state (recorder tap) serialize via a file-scope `Mutex<()>`
+  because `cargo test` runs unit tests on multiple threads.
+- **Dart unit:** 49 tests (1 skipped) across SceneVerdict, GateMetrics,
+  WaveformPainter, MatchResult, SoundPrototype centroid math,
+  EnvironmentManager persistence, SoundCategory taxonomy, anchor-seed
+  manifest validity, EnrollmentService orchestration (6 outcomes),
+  PrototypeRepository sidecar/mirror roundtrip (7 paths),
+  PrototypeLibraryScreen empty-state rendering.
+- **Flutter integration:** `app_boots_test.dart` (4 tests including the
+  diagnostic RustLib init guard), `dsp_event_flow_test.dart`,
+  `scene_pipeline_test.dart`, and **new in Phase 2**
+  `enrollment_flow_test.dart` (recorder lifecycle + Rust validator
+  responses).
+- **Patrol:** `patrol_permissions_test.dart` — drives the system mic +
+  notification dialogs, validates the foreground service notification,
+  exercises a 30 s background → foreground cycle.
+- **Maestro:** `.maestro/smoke.yaml` — cold-boot → permission grant →
+  10 s capture → stop → verify file.
+
+**Total host tests as of Phase 2: 78 green** (49 Dart + 29 Rust).
+
+## Skipped tests and why
+
+- `prototype_library_screen_test.dart` — the second test
+  ("populated repo renders a row per prototype with sample count") is
+  marked `skip: true`. The host widget-test path hangs reliably on the
+  second `pumpWidget` after a `PrototypeRepository.upsert`, due to a
+  broadcast `StreamController` × `InMemoryPrototypeVectorMirror` × test
+  binding microtask interaction. Functionality is covered by
+  `prototype_repository_test.dart` (upsert path) and
+  `enrollment_service_test.dart` (full chain). Patrol coverage in Phase
+  2.5 will validate the populated render on device.
+
 ## What's in the tree as of Phase 1
 
 - **Rust:** 12 tests across `dsp_smoke.rs` (FFT/MFCC/spectral/onset/GCC-PHAT),

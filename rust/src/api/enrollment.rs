@@ -188,3 +188,91 @@ pub fn analyze_enrollment_clip_16k_tuned(
     let (q, d) = analyze_clip(&samples, &gates);
     EnrollClipReport::from_parts(q, d)
 }
+
+#[cfg(test)]
+mod tap_tests {
+    use super::*;
+    use std::sync::Mutex;
+
+    // The tap is global state, so tests must serialize to keep `cargo test`
+    // (which runs unit tests on multiple threads) from racing on it.
+    static TAP_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    fn lock() -> std::sync::MutexGuard<'static, ()> {
+        TAP_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    #[test]
+    fn push_then_stop_downmixes_and_downsamples() {
+        let _g = lock();
+        // 1 second of interleaved stereo @ 48 kHz with L=+1000, R=-1000 →
+        // mono mixdown = 0. After 3:1 average downsample we should see ~16k
+        // samples of value 0 (with possibly one sample rounded off).
+        enroll_recorder_start(2000);
+        let pairs = 48_000;
+        let mut pcm = Vec::with_capacity(pairs * 2);
+        for _ in 0..pairs {
+            pcm.push(1_000);
+            pcm.push(-1_000);
+        }
+        pipeline_tap_push(&pcm);
+        let out = enroll_recorder_stop_take();
+        assert!(
+            (15_950..=16_010).contains(&out.len()),
+            "expected ~16000 mono samples after 48->16 kHz downmix, got {}",
+            out.len()
+        );
+        // All samples should be exactly 0 — L+R cancel before resample.
+        let any_nonzero = out.iter().any(|&s| s.abs() > 1);
+        assert!(!any_nonzero, "downmix should cancel symmetric L/R");
+    }
+
+    #[test]
+    fn push_respects_max_pairs_cap() {
+        let _g = lock();
+        enroll_recorder_start(100); // 4800 pairs @ 48 kHz
+        let huge_pairs = 100_000; // way more than the cap
+        let mut pcm = vec![0i16; huge_pairs * 2];
+        for i in 0..huge_pairs {
+            pcm[i * 2] = (i as i16).wrapping_mul(3);
+            pcm[i * 2 + 1] = (i as i16).wrapping_mul(3);
+        }
+        pipeline_tap_push(&pcm);
+        let out = enroll_recorder_stop_take();
+        // 4800 native pairs → ~1600 mono samples at 16 kHz.
+        assert!(
+            (1_500..=1_700).contains(&out.len()),
+            "cap should limit output to ~1600 samples; got {}",
+            out.len()
+        );
+    }
+
+    #[test]
+    fn push_with_no_active_tap_is_a_noop() {
+        let _g = lock();
+        let _ = enroll_recorder_stop_take(); // ensure no tap
+        pipeline_tap_push(&[1, 2, 3, 4]); // should not panic
+    }
+
+    #[test]
+    fn multiple_pushes_accumulate() {
+        let _g = lock();
+        enroll_recorder_start(2000);
+        let mut chunk = vec![0i16; 4800 * 2]; // 100 ms @ 48 kHz stereo
+        for i in 0..chunk.len() {
+            chunk[i] = if i % 2 == 0 { 5_000 } else { 5_000 };
+        }
+        pipeline_tap_push(&chunk);
+        pipeline_tap_push(&chunk);
+        let out = enroll_recorder_stop_take();
+        // 9600 native pairs → ~3200 mono samples at 16 kHz.
+        assert!(
+            (3_100..=3_300).contains(&out.len()),
+            "two 100ms pushes should yield ~3200 mono samples; got {}",
+            out.len()
+        );
+        // Downmix of L=R=5000 is 5000, then 3:1 average is still ~5000.
+        let avg = out.iter().map(|&s| s as i32).sum::<i32>() / out.len() as i32;
+        assert!((4_900..=5_100).contains(&avg), "expected ~5000 avg, got {}", avg);
+    }
+}

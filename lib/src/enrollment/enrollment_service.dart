@@ -1,11 +1,21 @@
 import 'dart:typed_data';
 
-import '../llm/embedding_store.dart';
 import '../rust/api/enrollment.dart' as rust_enroll;
 import 'caption_generator.dart';
 import 'categories.dart';
 import 'prototype.dart';
 import 'prototype_repository.dart';
+
+/// Minimal surface the enrollment flow needs from the embedding store.
+/// The real implementation calls flutter_gemma's EmbeddingGemma; tests
+/// supply a closure.
+abstract interface class DocumentEmbedder {
+  Future<List<double>> embedAsDocument(String text);
+}
+
+/// Validates → captions → embeds → persists, optionally driven by an
+/// injected Rust analyzer (defaults to the real `analyzeEnrollmentClip16K`).
+typedef ClipAnalyzer = Future<rust_enroll.EnrollClipReport> Function(List<int>);
 
 /// Orchestrates one enrollment recording:
 ///   1. Validate PCM (Rust DSP gates).
@@ -21,11 +31,14 @@ class EnrollmentService {
     required this.repo,
     required this.embeddings,
     required this.captioner,
-  });
+    ClipAnalyzer? analyzer,
+  }) : _analyzer =
+            analyzer ?? ((s) => rust_enroll.analyzeEnrollmentClip16K(samples: s));
 
   final PrototypeRepository repo;
-  final EmbeddingStore embeddings;
-  final CaptionGenerator captioner;
+  final DocumentEmbedder embeddings;
+  final Captioner captioner;
+  final ClipAnalyzer _analyzer;
 
   /// Add a sample to an existing prototype or create a new one.
   /// [prototypeId] null → create.
@@ -38,7 +51,7 @@ class EnrollmentService {
     String? spatialZone,
     String? userLabelHint,
   }) async {
-    final report = await rust_enroll.analyzeEnrollmentClip16K(samples: pcm16k);
+    final report = await _analyzer(pcm16k);
     if (!report.accepted) {
       return EnrollmentResult.rejected(report);
     }
