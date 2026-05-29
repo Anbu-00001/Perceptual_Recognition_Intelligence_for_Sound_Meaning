@@ -33,7 +33,8 @@
       "Bash(nm -D --defined-only target/release/libprism_dsp.so)",
       "Bash(nm -D --defined-only /home/anbu/26_class/Prism/rust/target/release/libprism_dsp.so)",
       "Bash(awk '{print $5}')",
-      "Bash(sed -i 's/strip = \"symbols\"/strip = \"debuginfo\"/' Cargo.toml)"
+      "Bash(sed -i 's/strip = \"symbols\"/strip = \"debuginfo\"/' Cargo.toml)",
+      "Bash(nm -D --defined-only rust/target/release/libprism_dsp.so)"
     ],
     "additionalDirectories": [
       "/home/anbu/26_class/Prism/lib/src/rust/api",

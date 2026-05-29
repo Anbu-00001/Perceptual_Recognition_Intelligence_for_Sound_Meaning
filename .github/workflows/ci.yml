@@ -93,11 +93,17 @@ jobs:
             test -s "$so" || { echo "::error::missing $so"; exit 1; }
             ls -lh "$so"
           done
-          # Check x86_64 (the emulator ABI) exports the FRB runtime entrypoint.
-          # `nm -D` reads .dynsym; absence here = dlsym from Dart will fail.
-          nm -D --defined-only android/app/src/main/jniLibs/x86_64/libprism_dsp.so \
-            | grep -q frb_init_frb_dart_api_dl \
-            || { echo "::error::libprism_dsp.so missing frb_init_frb_dart_api_dl"; exit 1; }
+          # Check x86_64 (the emulator ABI) exports the FRB v2 dispatch surface.
+          # `frb_get_rust_content_hash` is `RustLib.init()`'s first lookup — if
+          # absent, `mod frb_generated;` isn't compiled into the cdylib (was
+          # gated behind a stale `#[cfg(feature = "frb_generated")]` flag).
+          # `frb_pde_ffi_dispatcher_primary` is the single dispatcher every
+          # Dart→Rust call goes through; absence breaks every binding at once.
+          for sym in frb_get_rust_content_hash frb_pde_ffi_dispatcher_primary frb_pde_ffi_dispatcher_sync; do
+            nm -D --defined-only android/app/src/main/jniLibs/x86_64/libprism_dsp.so \
+              | grep -q " T $sym\$" \
+              || { echo "::error::libprism_dsp.so missing $sym"; exit 1; }
+          done
       - name: integration_test on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

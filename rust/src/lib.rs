@@ -13,7 +13,9 @@ pub mod ring;
 pub mod ffi;
 pub mod dsp;
 
-// flutter_rust_bridge generates this on first `codegen` run.
-// The compiler will error until codegen has been run once; that's expected.
-#[cfg(feature = "frb_generated")]
+// flutter_rust_bridge codegen output. MUST be compiled into the cdylib —
+// without it the .so ships zero `frbgen_prism_dsp_*` symbols and
+// `RustLib.init()` fails on `Failed to lookup symbol 'frb_get_rust_content_hash'`.
+// (Phase 0 used a `#[cfg(feature = "frb_generated")]` gate as a bootstrap so the
+// crate compiled before codegen had ever run. Removed once codegen settled.)
 mod frb_generated;
