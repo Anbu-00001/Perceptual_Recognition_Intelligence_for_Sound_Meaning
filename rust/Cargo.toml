@@ -54,7 +54,11 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 panic = "abort"
-strip = "symbols"
+# Strip debug info only. We verified empirically that `strip = "symbols"` also
+# preserves the .dynsym table (the `frb_*` exported C symbols flutter_rust_bridge
+# needs), but `debuginfo` keeps native stack frames intact when the .so crashes
+# inside a worker thread — at the cost of ~100 KB. Worth it.
+strip = "debuginfo"
 
 [profile.dev]
 opt-level = 1

@@ -115,15 +115,12 @@ class Phase1Eval {
     final personal = (manifest['personal_sounds'] as List? ?? const [])
         .cast<Map<String, dynamic>>();
     for (final p in personal) {
-      // For an audio clip we'd compute its EmbeddingGemma vector here; in
-      // Phase 1 we use the label as a textual proxy and let flutter_gemma
-      // produce the vector. Phase 1b will switch to audio-embedding directly.
-      await embeddings.addPrototype(
+      // Phase 1 textual proxy: embed the label and store as personal prototype.
+      // Phase 2 enrollment goes through PrototypeRepository instead.
+      await embeddings.quickEnrollFromText(
         id: 'personal_${p['label']}_${p.hashCode}',
         label: p['label'] as String,
         category: p['category'] as String,
-        collection: 'personal',
-        embedding: const [], // signals flutter_gemma to compute from content
       );
     }
 

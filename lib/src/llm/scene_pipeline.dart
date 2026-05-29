@@ -24,12 +24,20 @@ class ScenePipeline {
   ScenePipeline({
     required this.embeddings,
     required this.reasoner,
-    this.environment = 'home',
-  });
+    String environment = 'home',
+  }) : _environment = environment;
 
   final EmbeddingStore embeddings;
   final GemmaAudioReasoner reasoner;
-  final String environment;
+  String _environment;
+
+  String get environment => _environment;
+
+  /// Update the active environment without restarting the pipeline. Used by
+  /// the Phase 2 settings UI; the next event uses the new filter.
+  void setEnvironment(String env) {
+    _environment = env;
+  }
 
   final _controller = StreamController<SceneEvent>.broadcast();
   Timer? _pollTimer;
@@ -59,7 +67,7 @@ class ScenePipeline {
 
     final match = await embeddings.matchByQuery(
       query: _eventToQueryDigest(ev),
-      environment: environment,
+      environment: _environment,
     );
 
     if (match.isHit && match.source == MatchSource.personal && match.score >= 0.85) {

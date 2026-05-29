@@ -82,6 +82,22 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: ./scripts/build_rust_android.sh
+      - name: verify .so for every ABI + FRB symbols present
+        # Fail fast if the build silently dropped an ABI or the dynamic symbol
+        # table is empty. Either condition causes integration tests to crash on
+        # `RustLib.init()` with no useful log — costs 7 min of CI to discover.
+        run: |
+          set -e
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            so="android/app/src/main/jniLibs/$abi/libprism_dsp.so"
+            test -s "$so" || { echo "::error::missing $so"; exit 1; }
+            ls -lh "$so"
+          done
+          # Check x86_64 (the emulator ABI) exports the FRB runtime entrypoint.
+          # `nm -D` reads .dynsym; absence here = dlsym from Dart will fail.
+          nm -D --defined-only android/app/src/main/jniLibs/x86_64/libprism_dsp.so \
+            | grep -q frb_init_frb_dart_api_dl \
+            || { echo "::error::libprism_dsp.so missing frb_init_frb_dart_api_dl"; exit 1; }
       - name: integration_test on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

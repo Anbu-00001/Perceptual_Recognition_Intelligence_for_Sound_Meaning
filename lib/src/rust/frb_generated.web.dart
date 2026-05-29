@@ -8,6 +8,7 @@
 
 import 'api/audio_stream.dart';
 import 'api/dsp_pipeline.dart';
+import 'api/enrollment.dart';
 import 'api/session.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -26,7 +27,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
   DspEvent dco_decode_box_autoadd_dsp_event(dynamic raw);
+
+  @protected
+  EnrollRejectReason dco_decode_box_autoadd_enroll_reject_reason(dynamic raw);
 
   @protected
   WaveformFrame dco_decode_box_autoadd_waveform_frame(dynamic raw);
@@ -36,6 +43,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DspEventKind dco_decode_dsp_event_kind(dynamic raw);
+
+  @protected
+  EnrollClipReport dco_decode_enroll_clip_report(dynamic raw);
+
+  @protected
+  EnrollRejectReason dco_decode_enroll_reject_reason(dynamic raw);
 
   @protected
   double dco_decode_f_32(dynamic raw);
@@ -50,6 +63,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_i_16_loose(dynamic raw);
+
+  @protected
   Int16List dco_decode_list_prim_i_16_strict(dynamic raw);
 
   @protected
@@ -57,6 +73,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DspEvent? dco_decode_opt_box_autoadd_dsp_event(dynamic raw);
+
+  @protected
+  EnrollRejectReason? dco_decode_opt_box_autoadd_enroll_reject_reason(
+    dynamic raw,
+  );
 
   @protected
   WaveformFrame? dco_decode_opt_box_autoadd_waveform_frame(dynamic raw);
@@ -86,7 +107,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
   DspEvent sse_decode_box_autoadd_dsp_event(SseDeserializer deserializer);
+
+  @protected
+  EnrollRejectReason sse_decode_box_autoadd_enroll_reject_reason(
+    SseDeserializer deserializer,
+  );
 
   @protected
   WaveformFrame sse_decode_box_autoadd_waveform_frame(
@@ -98,6 +127,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DspEventKind sse_decode_dsp_event_kind(SseDeserializer deserializer);
+
+  @protected
+  EnrollClipReport sse_decode_enroll_clip_report(SseDeserializer deserializer);
+
+  @protected
+  EnrollRejectReason sse_decode_enroll_reject_reason(
+    SseDeserializer deserializer,
+  );
 
   @protected
   double sse_decode_f_32(SseDeserializer deserializer);
@@ -112,6 +149,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_i_16_loose(SseDeserializer deserializer);
+
+  @protected
   Int16List sse_decode_list_prim_i_16_strict(SseDeserializer deserializer);
 
   @protected
@@ -119,6 +159,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DspEvent? sse_decode_opt_box_autoadd_dsp_event(SseDeserializer deserializer);
+
+  @protected
+  EnrollRejectReason? sse_decode_opt_box_autoadd_enroll_reject_reason(
+    SseDeserializer deserializer,
+  );
 
   @protected
   WaveformFrame? sse_decode_opt_box_autoadd_waveform_frame(
@@ -147,14 +192,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Zone sse_decode_zone(SseDeserializer deserializer);
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
+  void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
-  void sse_encode_String(String self, SseSerializer serializer);
+  void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_dsp_event(
     DspEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_enroll_reject_reason(
+    EnrollRejectReason self,
     SseSerializer serializer,
   );
 
@@ -171,6 +222,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_dsp_event_kind(DspEventKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_enroll_clip_report(
+    EnrollClipReport self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_enroll_reject_reason(
+    EnrollRejectReason self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_f_32(double self, SseSerializer serializer);
 
   @protected
@@ -182,6 +245,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_prim_f_32_strict(
     Float32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_i_16_loose(
+    List<int> self,
     SseSerializer serializer,
   );
 
@@ -200,6 +269,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_dsp_event(
     DspEvent? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_enroll_reject_reason(
+    EnrollRejectReason? self,
     SseSerializer serializer,
   );
 
@@ -229,9 +304,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_zone(Zone self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
 }
 
 // Section: wire_class

@@ -5,6 +5,7 @@
 
 import 'api/audio_stream.dart';
 import 'api/dsp_pipeline.dart';
+import 'api/enrollment.dart';
 import 'api/session.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -66,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 1423800464;
+  int get rustContentHash => -1210377952;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -78,6 +79,20 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<EnrollClipReport> crateApiEnrollmentAnalyzeEnrollmentClip16K({
+    required List<int> samples,
+  });
+
+  Future<EnrollClipReport> crateApiEnrollmentAnalyzeEnrollmentClip16KTuned({
+    required List<int> samples,
+    required int minDurationMs,
+    required int maxDurationMs,
+    required double minSnrDb,
+    required double minActiveRatio,
+    required double maxClippingRatio,
+    required double minPeakDbfs,
+  });
+
   Future<void> crateApiSessionAppendImuSample({
     required BigInt tsNs,
     required double ax,
@@ -87,6 +102,12 @@ abstract class RustLibApi extends BaseApi {
     required double gy,
     required double gz,
   });
+
+  Future<void> crateApiEnrollmentEnrollRecorderStart({
+    required int maxDurationMs,
+  });
+
+  Future<Int16List> crateApiEnrollmentEnrollRecorderStopTake();
 
   DspEvent? crateApiDspPipelineNextDspEvent();
 
@@ -117,6 +138,100 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<EnrollClipReport> crateApiEnrollmentAnalyzeEnrollmentClip16K({
+    required List<int> samples,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_i_16_loose(samples, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_enroll_clip_report,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEnrollmentAnalyzeEnrollmentClip16KConstMeta,
+        argValues: [samples],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEnrollmentAnalyzeEnrollmentClip16KConstMeta =>
+      const TaskConstMeta(
+        debugName: "analyze_enrollment_clip_16k",
+        argNames: ["samples"],
+      );
+
+  @override
+  Future<EnrollClipReport> crateApiEnrollmentAnalyzeEnrollmentClip16KTuned({
+    required List<int> samples,
+    required int minDurationMs,
+    required int maxDurationMs,
+    required double minSnrDb,
+    required double minActiveRatio,
+    required double maxClippingRatio,
+    required double minPeakDbfs,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_i_16_loose(samples, serializer);
+          sse_encode_u_32(minDurationMs, serializer);
+          sse_encode_u_32(maxDurationMs, serializer);
+          sse_encode_f_32(minSnrDb, serializer);
+          sse_encode_f_32(minActiveRatio, serializer);
+          sse_encode_f_32(maxClippingRatio, serializer);
+          sse_encode_f_32(minPeakDbfs, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_enroll_clip_report,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEnrollmentAnalyzeEnrollmentClip16KTunedConstMeta,
+        argValues: [
+          samples,
+          minDurationMs,
+          maxDurationMs,
+          minSnrDb,
+          minActiveRatio,
+          maxClippingRatio,
+          minPeakDbfs,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEnrollmentAnalyzeEnrollmentClip16KTunedConstMeta =>
+      const TaskConstMeta(
+        debugName: "analyze_enrollment_clip_16k_tuned",
+        argNames: [
+          "samples",
+          "minDurationMs",
+          "maxDurationMs",
+          "minSnrDb",
+          "minActiveRatio",
+          "maxClippingRatio",
+          "minPeakDbfs",
+        ],
+      );
+
+  @override
   Future<void> crateApiSessionAppendImuSample({
     required BigInt tsNs,
     required double ax,
@@ -140,7 +255,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 3,
             port: port_,
           );
         },
@@ -162,12 +277,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateApiEnrollmentEnrollRecorderStart({
+    required int maxDurationMs,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(maxDurationMs, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEnrollmentEnrollRecorderStartConstMeta,
+        argValues: [maxDurationMs],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEnrollmentEnrollRecorderStartConstMeta =>
+      const TaskConstMeta(
+        debugName: "enroll_recorder_start",
+        argNames: ["maxDurationMs"],
+      );
+
+  @override
+  Future<Int16List> crateApiEnrollmentEnrollRecorderStopTake() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_i_16_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEnrollmentEnrollRecorderStopTakeConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEnrollmentEnrollRecorderStopTakeConstMeta =>
+      const TaskConstMeta(debugName: "enroll_recorder_stop_take", argNames: []);
+
+  @override
   DspEvent? crateApiDspPipelineNextDspEvent() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_dsp_event,
@@ -189,7 +364,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_waveform_frame,
@@ -211,7 +386,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_u_32,
@@ -233,7 +408,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -260,7 +435,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(documentsDir, serializer);
           sse_encode_String(tsLabel, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_session_paths,
@@ -285,7 +460,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -307,7 +482,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_session_paths,
@@ -330,7 +505,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_u_64(eventId, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_i_16_strict,
@@ -356,9 +531,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
   DspEvent dco_decode_box_autoadd_dsp_event(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_dsp_event(raw);
+  }
+
+  @protected
+  EnrollRejectReason dco_decode_box_autoadd_enroll_reject_reason(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_enroll_reject_reason(raw);
   }
 
   @protected
@@ -397,6 +584,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EnrollClipReport dco_decode_enroll_clip_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return EnrollClipReport(
+      accepted: dco_decode_bool(arr[0]),
+      rejectReason: dco_decode_opt_box_autoadd_enroll_reject_reason(arr[1]),
+      durationMs: dco_decode_u_32(arr[2]),
+      peakDbfs: dco_decode_f_32(arr[3]),
+      rmsDbfs: dco_decode_f_32(arr[4]),
+      noiseFloorDbfs: dco_decode_f_32(arr[5]),
+      snrDb: dco_decode_f_32(arr[6]),
+      activeRatio: dco_decode_f_32(arr[7]),
+      clippingRatio: dco_decode_f_32(arr[8]),
+      zcr: dco_decode_f_32(arr[9]),
+    );
+  }
+
+  @protected
+  EnrollRejectReason dco_decode_enroll_reject_reason(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EnrollRejectReason.values[raw as int];
+  }
+
+  @protected
   double dco_decode_f_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -421,6 +634,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<int> dco_decode_list_prim_i_16_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
+  }
+
+  @protected
   Int16List dco_decode_list_prim_i_16_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Int16List;
@@ -436,6 +655,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   DspEvent? dco_decode_opt_box_autoadd_dsp_event(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_dsp_event(raw);
+  }
+
+  @protected
+  EnrollRejectReason? dco_decode_opt_box_autoadd_enroll_reject_reason(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_enroll_reject_reason(raw);
   }
 
   @protected
@@ -509,9 +738,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
   DspEvent sse_decode_box_autoadd_dsp_event(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_dsp_event(deserializer));
+  }
+
+  @protected
+  EnrollRejectReason sse_decode_box_autoadd_enroll_reject_reason(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_enroll_reject_reason(deserializer));
   }
 
   @protected
@@ -563,6 +806,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EnrollClipReport sse_decode_enroll_clip_report(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_accepted = sse_decode_bool(deserializer);
+    var var_rejectReason = sse_decode_opt_box_autoadd_enroll_reject_reason(
+      deserializer,
+    );
+    var var_durationMs = sse_decode_u_32(deserializer);
+    var var_peakDbfs = sse_decode_f_32(deserializer);
+    var var_rmsDbfs = sse_decode_f_32(deserializer);
+    var var_noiseFloorDbfs = sse_decode_f_32(deserializer);
+    var var_snrDb = sse_decode_f_32(deserializer);
+    var var_activeRatio = sse_decode_f_32(deserializer);
+    var var_clippingRatio = sse_decode_f_32(deserializer);
+    var var_zcr = sse_decode_f_32(deserializer);
+    return EnrollClipReport(
+      accepted: var_accepted,
+      rejectReason: var_rejectReason,
+      durationMs: var_durationMs,
+      peakDbfs: var_peakDbfs,
+      rmsDbfs: var_rmsDbfs,
+      noiseFloorDbfs: var_noiseFloorDbfs,
+      snrDb: var_snrDb,
+      activeRatio: var_activeRatio,
+      clippingRatio: var_clippingRatio,
+      zcr: var_zcr,
+    );
+  }
+
+  @protected
+  EnrollRejectReason sse_decode_enroll_reject_reason(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return EnrollRejectReason.values[inner];
+  }
+
+  @protected
   double sse_decode_f_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat32();
@@ -588,6 +869,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<int> sse_decode_list_prim_i_16_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getInt16List(len_);
+  }
+
+  @protected
   Int16List sse_decode_list_prim_i_16_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -607,6 +895,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_dsp_event(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  EnrollRejectReason? sse_decode_opt_box_autoadd_enroll_reject_reason(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_enroll_reject_reason(deserializer));
     } else {
       return null;
     }
@@ -681,15 +982,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
   }
 
   @protected
@@ -699,6 +1000,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_dsp_event(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_enroll_reject_reason(
+    EnrollRejectReason self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_enroll_reject_reason(self, serializer);
   }
 
   @protected
@@ -735,6 +1045,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_enroll_clip_report(
+    EnrollClipReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.accepted, serializer);
+    sse_encode_opt_box_autoadd_enroll_reject_reason(
+      self.rejectReason,
+      serializer,
+    );
+    sse_encode_u_32(self.durationMs, serializer);
+    sse_encode_f_32(self.peakDbfs, serializer);
+    sse_encode_f_32(self.rmsDbfs, serializer);
+    sse_encode_f_32(self.noiseFloorDbfs, serializer);
+    sse_encode_f_32(self.snrDb, serializer);
+    sse_encode_f_32(self.activeRatio, serializer);
+    sse_encode_f_32(self.clippingRatio, serializer);
+    sse_encode_f_32(self.zcr, serializer);
+  }
+
+  @protected
+  void sse_encode_enroll_reject_reason(
+    EnrollRejectReason self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_f_32(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat32(self);
@@ -760,6 +1100,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putFloat32List(self);
+  }
+
+  @protected
+  void sse_encode_list_prim_i_16_loose(
+    List<int> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putInt16List(
+      self is Int16List ? self : Int16List.fromList(self),
+    );
   }
 
   @protected
@@ -792,6 +1144,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_dsp_event(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_enroll_reject_reason(
+    EnrollRejectReason? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_enroll_reject_reason(self, serializer);
     }
   }
 
@@ -852,11 +1217,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_zone(Zone self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }

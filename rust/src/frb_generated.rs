@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1423800464;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1210377952;
 
 // Section: executor
 
@@ -46,6 +46,90 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__enrollment__analyze_enrollment_clip_16k_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "analyze_enrollment_clip_16k",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_samples = <Vec<i16>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::enrollment::analyze_enrollment_clip_16k(api_samples),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__enrollment__analyze_enrollment_clip_16k_tuned_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "analyze_enrollment_clip_16k_tuned",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_samples = <Vec<i16>>::sse_decode(&mut deserializer);
+            let api_min_duration_ms = <u32>::sse_decode(&mut deserializer);
+            let api_max_duration_ms = <u32>::sse_decode(&mut deserializer);
+            let api_min_snr_db = <f32>::sse_decode(&mut deserializer);
+            let api_min_active_ratio = <f32>::sse_decode(&mut deserializer);
+            let api_max_clipping_ratio = <f32>::sse_decode(&mut deserializer);
+            let api_min_peak_dbfs = <f32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::enrollment::analyze_enrollment_clip_16k_tuned(
+                            api_samples,
+                            api_min_duration_ms,
+                            api_max_duration_ms,
+                            api_min_snr_db,
+                            api_min_active_ratio,
+                            api_max_clipping_ratio,
+                            api_min_peak_dbfs,
+                        ),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__session__append_imu_sample_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -83,6 +167,74 @@ fn wire__crate__api__session__append_imu_sample_impl(
                             api_ts_ns, api_ax, api_ay, api_az, api_gx, api_gy, api_gz,
                         );
                     })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__enrollment__enroll_recorder_start_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "enroll_recorder_start",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_max_duration_ms = <u32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::enrollment::enroll_recorder_start(api_max_duration_ms);
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__enrollment__enroll_recorder_stop_take_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "enroll_recorder_stop_take",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Result::<_, ()>::Ok(crate::api::enrollment::enroll_recorder_stop_take())?;
                     Ok(output_ok)
                 })())
             }
@@ -341,6 +493,13 @@ impl SseDecode for String {
     }
 }
 
+impl SseDecode for bool {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u8().unwrap() != 0
+    }
+}
+
 impl SseDecode for crate::api::dsp_pipeline::DspEvent {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -385,6 +544,51 @@ impl SseDecode for crate::api::dsp_pipeline::DspEventKind {
             2 => crate::api::dsp_pipeline::DspEventKind::Onset,
             3 => crate::api::dsp_pipeline::DspEventKind::PeriodicSnapshot,
             _ => unreachable!("Invalid variant for DspEventKind: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::enrollment::EnrollClipReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_accepted = <bool>::sse_decode(deserializer);
+        let mut var_rejectReason =
+            <Option<crate::api::enrollment::EnrollRejectReason>>::sse_decode(deserializer);
+        let mut var_durationMs = <u32>::sse_decode(deserializer);
+        let mut var_peakDbfs = <f32>::sse_decode(deserializer);
+        let mut var_rmsDbfs = <f32>::sse_decode(deserializer);
+        let mut var_noiseFloorDbfs = <f32>::sse_decode(deserializer);
+        let mut var_snrDb = <f32>::sse_decode(deserializer);
+        let mut var_activeRatio = <f32>::sse_decode(deserializer);
+        let mut var_clippingRatio = <f32>::sse_decode(deserializer);
+        let mut var_zcr = <f32>::sse_decode(deserializer);
+        return crate::api::enrollment::EnrollClipReport {
+            accepted: var_accepted,
+            reject_reason: var_rejectReason,
+            duration_ms: var_durationMs,
+            peak_dbfs: var_peakDbfs,
+            rms_dbfs: var_rmsDbfs,
+            noise_floor_dbfs: var_noiseFloorDbfs,
+            snr_db: var_snrDb,
+            active_ratio: var_activeRatio,
+            clipping_ratio: var_clippingRatio,
+            zcr: var_zcr,
+        };
+    }
+}
+
+impl SseDecode for crate::api::enrollment::EnrollRejectReason {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::enrollment::EnrollRejectReason::TooShort,
+            1 => crate::api::enrollment::EnrollRejectReason::TooLong,
+            2 => crate::api::enrollment::EnrollRejectReason::TooQuiet,
+            3 => crate::api::enrollment::EnrollRejectReason::TooNoisy,
+            4 => crate::api::enrollment::EnrollRejectReason::Clipping,
+            5 => crate::api::enrollment::EnrollRejectReason::NoSignal,
+            _ => unreachable!("Invalid variant for EnrollRejectReason: {}", inner),
         };
     }
 }
@@ -451,6 +655,19 @@ impl SseDecode for Option<crate::api::dsp_pipeline::DspEvent> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<crate::api::dsp_pipeline::DspEvent>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::enrollment::EnrollRejectReason> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::enrollment::EnrollRejectReason>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -542,13 +759,6 @@ impl SseDecode for crate::api::dsp_pipeline::Zone {
     }
 }
 
-impl SseDecode for bool {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_u8().unwrap() != 0
-    }
-}
-
 fn pde_ffi_dispatcher_primary_impl(
     func_id: i32,
     port: flutter_rust_bridge::for_generated::MessagePort,
@@ -558,7 +768,31 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__session__append_imu_sample_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__crate__api__enrollment__analyze_enrollment_clip_16k_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        2 => wire__crate__api__enrollment__analyze_enrollment_clip_16k_tuned_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        3 => wire__crate__api__session__append_imu_sample_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__enrollment__enroll_recorder_start_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        5 => wire__crate__api__enrollment__enroll_recorder_stop_take_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
         _ => unreachable!(),
     }
 }
@@ -571,14 +805,16 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        2 => wire__crate__api__dsp_pipeline__next_dsp_event_impl(ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__audio_stream__next_waveform_frame_impl(ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__audio_stream__ring_occupancy_impl(ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__dsp_pipeline__start_dsp_impl(ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__session__start_session_impl(ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__dsp_pipeline__stop_dsp_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__session__stop_session_impl(ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__dsp_pipeline__take_event_audio_16k_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__dsp_pipeline__next_dsp_event_impl(ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__audio_stream__next_waveform_frame_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__audio_stream__ring_occupancy_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__dsp_pipeline__start_dsp_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__session__start_session_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__dsp_pipeline__stop_dsp_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__session__stop_session_impl(ptr, rust_vec_len, data_len),
+        13 => {
+            wire__crate__api__dsp_pipeline__take_event_audio_16k_impl(ptr, rust_vec_len, data_len)
+        }
         _ => unreachable!(),
     }
 }
@@ -637,6 +873,60 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::dsp_pipeline::DspEventKind>
     for crate::api::dsp_pipeline::DspEventKind
 {
     fn into_into_dart(self) -> crate::api::dsp_pipeline::DspEventKind {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::enrollment::EnrollClipReport {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.accepted.into_into_dart().into_dart(),
+            self.reject_reason.into_into_dart().into_dart(),
+            self.duration_ms.into_into_dart().into_dart(),
+            self.peak_dbfs.into_into_dart().into_dart(),
+            self.rms_dbfs.into_into_dart().into_dart(),
+            self.noise_floor_dbfs.into_into_dart().into_dart(),
+            self.snr_db.into_into_dart().into_dart(),
+            self.active_ratio.into_into_dart().into_dart(),
+            self.clipping_ratio.into_into_dart().into_dart(),
+            self.zcr.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::enrollment::EnrollClipReport
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::enrollment::EnrollClipReport>
+    for crate::api::enrollment::EnrollClipReport
+{
+    fn into_into_dart(self) -> crate::api::enrollment::EnrollClipReport {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::enrollment::EnrollRejectReason {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::TooShort => 0.into_dart(),
+            Self::TooLong => 1.into_dart(),
+            Self::TooQuiet => 2.into_dart(),
+            Self::TooNoisy => 3.into_dart(),
+            Self::Clipping => 4.into_dart(),
+            Self::NoSignal => 5.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::enrollment::EnrollRejectReason
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::enrollment::EnrollRejectReason>
+    for crate::api::enrollment::EnrollRejectReason
+{
+    fn into_into_dart(self) -> crate::api::enrollment::EnrollRejectReason {
         self
     }
 }
@@ -716,6 +1006,13 @@ impl SseEncode for String {
     }
 }
 
+impl SseEncode for bool {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u8(self as _).unwrap();
+    }
+}
+
 impl SseEncode for crate::api::dsp_pipeline::DspEvent {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -744,6 +1041,45 @@ impl SseEncode for crate::api::dsp_pipeline::DspEventKind {
                 crate::api::dsp_pipeline::DspEventKind::VadEnd => 1,
                 crate::api::dsp_pipeline::DspEventKind::Onset => 2,
                 crate::api::dsp_pipeline::DspEventKind::PeriodicSnapshot => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::enrollment::EnrollClipReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.accepted, serializer);
+        <Option<crate::api::enrollment::EnrollRejectReason>>::sse_encode(
+            self.reject_reason,
+            serializer,
+        );
+        <u32>::sse_encode(self.duration_ms, serializer);
+        <f32>::sse_encode(self.peak_dbfs, serializer);
+        <f32>::sse_encode(self.rms_dbfs, serializer);
+        <f32>::sse_encode(self.noise_floor_dbfs, serializer);
+        <f32>::sse_encode(self.snr_db, serializer);
+        <f32>::sse_encode(self.active_ratio, serializer);
+        <f32>::sse_encode(self.clipping_ratio, serializer);
+        <f32>::sse_encode(self.zcr, serializer);
+    }
+}
+
+impl SseEncode for crate::api::enrollment::EnrollRejectReason {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::enrollment::EnrollRejectReason::TooShort => 0,
+                crate::api::enrollment::EnrollRejectReason::TooLong => 1,
+                crate::api::enrollment::EnrollRejectReason::TooQuiet => 2,
+                crate::api::enrollment::EnrollRejectReason::TooNoisy => 3,
+                crate::api::enrollment::EnrollRejectReason::Clipping => 4,
+                crate::api::enrollment::EnrollRejectReason::NoSignal => 5,
                 _ => {
                     unimplemented!("");
                 }
@@ -810,6 +1146,16 @@ impl SseEncode for Option<crate::api::dsp_pipeline::DspEvent> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::api::dsp_pipeline::DspEvent>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::enrollment::EnrollRejectReason> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::enrollment::EnrollRejectReason>::sse_encode(value, serializer);
         }
     }
 }
@@ -884,13 +1230,6 @@ impl SseEncode for crate::api::dsp_pipeline::Zone {
             },
             serializer,
         );
-    }
-}
-
-impl SseEncode for bool {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_u8(self as _).unwrap();
     }
 }
 

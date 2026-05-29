@@ -23,6 +23,9 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   rxdart: ^0.28.0
 
+  # Phase 2 enrollment persistence.
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -42,3 +45,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/anchor_seeds.json

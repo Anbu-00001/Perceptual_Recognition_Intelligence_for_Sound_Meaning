@@ -24,7 +24,16 @@
       "Bash(flutter pub *)",
       "Bash(find ~/.pub-cache -path '*flutter_gemma*' -name \"*.dart\" 2>/dev/null | head -30)",
       "Read(//home/anbu/.pub-cache/**)",
-      "Bash(bash /home/anbu/26_class/Prism/scripts/test.sh --layer host)"
+      "Bash(bash /home/anbu/26_class/Prism/scripts/test.sh --layer host)",
+      "Bash(cargo test *)",
+      "Bash(./scripts/codegen.sh)",
+      "Bash(flutter_rust_bridge_codegen generate *)",
+      "Bash(cargo build *)",
+      "Bash(./scripts/build_rust_android.sh)",
+      "Bash(nm -D --defined-only target/release/libprism_dsp.so)",
+      "Bash(nm -D --defined-only /home/anbu/26_class/Prism/rust/target/release/libprism_dsp.so)",
+      "Bash(awk '{print $5}')",
+      "Bash(sed -i 's/strip = \"symbols\"/strip = \"debuginfo\"/' Cargo.toml)"
     ],
     "additionalDirectories": [
       "/home/anbu/26_class/Prism/lib/src/rust/api",

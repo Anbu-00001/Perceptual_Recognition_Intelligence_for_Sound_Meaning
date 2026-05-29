@@ -7,7 +7,9 @@
 //!   - `vad`      — energy + ZCR voice activity detection with hangover.
 //!   - `onset`    — spectral-flux onset detector.
 //!   - `spatial`  — GCC-PHAT cross-channel TDOA → angle estimate.
+//!   - `enrollment` (Phase 2) — clip-quality gates for enrollment recordings.
 
+pub mod enrollment;
 pub mod fft;
 pub mod features;
 pub mod mel;

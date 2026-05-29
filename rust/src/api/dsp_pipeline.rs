@@ -166,6 +166,9 @@ fn dsp_loop() {
         let usable = n & !1;
         let pairs = usable / 2;
 
+        // Phase 2: feed the enrollment recorder iff Dart turned it on.
+        crate::api::enrollment::pipeline_tap_push(&drain[..usable]);
+
         // Split L/R i16, append to history (with cap).
         for i in 0..pairs {
             history_l.push(drain[i * 2]);
