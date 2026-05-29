@@ -1,0 +1,52 @@
+# Maestro smoke flow. Runs end-to-end against a real APK without invoking the
+# Dart test harness — useful for catching cold-boot regressions in CI when
+# you don't want a full integration test cycle (which compiles a test runner
+# variant of the APK).
+#
+# Run locally:
+#   maestro test .maestro/smoke.yaml
+#
+# CI installs maestro CLI; see .github/workflows/ci.yml.
+
+appId: com.prism.prism
+---
+- launchApp:
+    clearState: true
+- assertVisible: "PRISM · Phase 0"
+- assertVisible: "Idle"
+
+- tapOn: "Start capture"
+
+# Grant mic when prompted (single permission for both Android 14+ paths).
+- runFlow:
+    when:
+      visible: "While using the app"
+    commands:
+      - tapOn: "While using the app"
+
+# Grant notification (Android 13+).
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+- assertVisible: "Listening"
+- assertVisible: "Stop capture"
+
+- tapOn: "Record session"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Stop recording"
+
+# Hold a 10-second recording window.
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- tapOn: "Stop recording"
+- assertVisible:
+    text: ".*\\.wav"
+    pattern: true
+
+- tapOn: "Stop capture"
+- assertVisible: "Idle"

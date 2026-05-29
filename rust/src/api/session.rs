@@ -141,7 +141,6 @@ fn wav_drain_loop() {
     }
 }
 
-#[frb(dart_metadata = ("freezed"))]
 #[derive(Debug, Clone)]
 pub struct SessionPaths {
     pub wav_path: String,

@@ -1,0 +1,88 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rust-tests:
+    name: rust unit + integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+      - name: cargo test
+        working-directory: rust
+        run: |
+          cargo test --lib
+          cargo test --tests
+
+  dart-tests:
+    name: flutter analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: pub get
+        run: flutter pub get
+      - name: analyze
+        run: flutter analyze --no-fatal-infos
+      - name: test
+        run: flutter test --coverage
+      - name: upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+
+  android-integration:
+    name: integration_test on android emulator
+    runs-on: ubuntu-latest
+    needs: [rust-tests, dart-tests]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - name: install cargo-ndk
+        run: cargo install --locked cargo-ndk
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: enable kvm
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: pub get
+        run: flutter pub get
+      - name: build rust .so
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+        run: ./scripts/build_rust_android.sh
+      - name: integration_test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          script: |
+            flutter test integration_test/app_boots_test.dart
+            flutter test integration_test/dsp_event_flow_test.dart
+            flutter test integration_test/scene_pipeline_test.dart

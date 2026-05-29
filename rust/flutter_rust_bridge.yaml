@@ -2,9 +2,5 @@ rust_input: crate::api
 dart_output: ../lib/src/rust
 rust_root: .
 dart_root: ..
-
-# Generated Rust files
 rust_output: src/frb_generated.rs
-
-# Bind common containers via efficient zero-copy where possible
-dart_3: true
+dart3: true

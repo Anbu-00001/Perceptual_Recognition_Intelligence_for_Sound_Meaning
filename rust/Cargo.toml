@@ -16,6 +16,12 @@ ringbuf = "0.4"
 crossbeam-channel = "0.5"
 parking_lot = "0.12"
 
+# DSP
+rustfft = "6.2"
+realfft = "3.4"
+apodize = "1.0"
+num-complex = "0.4"
+
 # Logging — base abstraction available everywhere
 log = "0.4"
 

@@ -14,7 +14,6 @@ use std::sync::OnceLock;
 use std::time::Instant;
 
 /// One waveform frame for the UI scope.
-#[frb(dart_metadata = ("freezed"))]
 #[derive(Debug, Clone)]
 pub struct WaveformFrame {
     pub timestamp_ms: u64,

@@ -11,6 +11,7 @@
 pub mod api;
 pub mod ring;
 pub mod ffi;
+pub mod dsp;
 
 // flutter_rust_bridge generates this on first `codegen` run.
 // The compiler will error until codegen has been run once; that's expected.

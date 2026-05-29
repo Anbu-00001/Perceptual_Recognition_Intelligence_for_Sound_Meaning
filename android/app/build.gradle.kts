@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.prism.prism"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -25,7 +25,7 @@ android {
         applicationId = "com.prism.prism"
         // 26 = O. Required floor for FOREGROUND_SERVICE_TYPE_MICROPHONE plumbing + modern AudioRecord.
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
