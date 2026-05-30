@@ -15,16 +15,27 @@ import '../spatial/zone_enrollment_service.dart';
 /// (foreground service alive + AudioRecord open). The recorder is a tap
 /// onto the live audio pipeline, not a fresh open of the mic.
 class ZoneEnrollmentScreen extends StatefulWidget {
-  const ZoneEnrollmentScreen({
+  ZoneEnrollmentScreen({
     super.key,
     required this.repo,
     required this.environment,
     this.service,
-  });
+    void Function(int maxMs)? recorderStart,
+    Future<List<int>> Function()? recorderStopTake,
+  })  : recorderStart = recorderStart ??
+            ((ms) => rust_enroll.enrollRecorderStart(maxDurationMs: ms)),
+        recorderStopTake =
+            recorderStopTake ?? (() => rust_enroll.enrollRecorderStopTake());
 
   final RoomZoneRepository repo;
   final String environment;
   final ZoneEnrollmentService? service;
+
+  // Injection seams so widget tests can drive the wizard without a live
+  // Rust bridge. The default closures call the generated FFI; tests pass
+  // synchronous fakes that capture their arguments.
+  final void Function(int maxMs) recorderStart;
+  final Future<List<int>> Function() recorderStopTake;
 
   @override
   State<ZoneEnrollmentScreen> createState() => _ZoneEnrollmentScreenState();
@@ -55,7 +66,7 @@ class _ZoneEnrollmentScreenState extends State<ZoneEnrollmentScreen> {
       setState(() => _status = 'Enter a label first (e.g. "Kitchen").');
       return;
     }
-    rust_enroll.enrollRecorderStart(maxDurationMs: _captureSeconds * 1000 + 500);
+    widget.recorderStart(_captureSeconds * 1000 + 500);
     setState(() {
       _recording = true;
       _elapsed = 0;
@@ -74,7 +85,7 @@ class _ZoneEnrollmentScreenState extends State<ZoneEnrollmentScreen> {
   Future<void> _finish() async {
     _timer?.cancel();
     if (!_recording) return;
-    final pcm = await rust_enroll.enrollRecorderStopTake();
+    final pcm = await widget.recorderStopTake();
     if (!mounted) return;
     setState(() => _recording = false);
 
@@ -105,7 +116,7 @@ class _ZoneEnrollmentScreenState extends State<ZoneEnrollmentScreen> {
   Future<void> _cancel() async {
     _timer?.cancel();
     if (_recording) {
-      await rust_enroll.enrollRecorderStopTake();
+      await widget.recorderStopTake();
     }
     setState(() {
       _recording = false;
