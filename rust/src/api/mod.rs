@@ -4,3 +4,4 @@ pub mod audio_stream;
 pub mod dsp_pipeline;
 pub mod enrollment;
 pub mod session;
+pub mod zone;

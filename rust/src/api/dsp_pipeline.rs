@@ -9,12 +9,15 @@
 //! event id; Dart fetches them via `take_event_audio_16k(event_id)` for forwarding
 //! to Gemma3n (which expects 16 kHz mono WAV).
 
+use crate::api::zone::snapshot_prototypes;
+use crate::dsp::angle_tracker::AngleTracker;
 use crate::dsp::fft::{magnitude_spectrum, pcm_to_f32, STFT_HOP, STFT_N};
 use crate::dsp::features::{spectral_summary, time_features};
 use crate::dsp::mel::{log_mel, mfcc, N_CEPSTRAL};
 use crate::dsp::onset::OnsetDetector;
 use crate::dsp::spatial::{estimate as spatial_estimate, SpatialZone};
 use crate::dsp::vad::{VadConfig, VadEdge, VadStream};
+use crate::dsp::zone::{classify as zone_classify, zone_feature_from_audio};
 use crate::ring;
 
 use crossbeam_channel::{bounded, Receiver, Sender};
@@ -79,6 +82,20 @@ pub struct DspEvent {
     pub zone: Zone,
     pub angle_deg: f32,
     pub spatial_confidence: f32,
+
+    /// Phase 3: Kalman-smoothed angle. 0 when no fresh measurement and
+    /// no prior state — use `smoothed_angle_confidence == 0.0` as the
+    /// gate, not `angle == 0.0`, since the genuine center is 0°.
+    pub smoothed_angle_deg: f32,
+    /// 0..1, derived from posterior variance. Drops as the filter coasts
+    /// without measurement updates.
+    pub smoothed_angle_confidence: f32,
+
+    /// Phase 3: best-matching enrolled room. Empty string when no
+    /// prototype crossed the confidence/margin floor.
+    pub zone_label: String,
+    pub zone_id: String,
+    pub zone_confidence: f32,
 }
 
 static RUNNING: AtomicBool = AtomicBool::new(false);
@@ -132,6 +149,8 @@ pub fn take_event_audio_16k(event_id: u64) -> Vec<i16> {
 fn dsp_loop() {
     let mut vad = VadStream::new(VadConfig::default());
     let mut onset = OnsetDetector::new();
+    // Phase 3: lives in the loop scope (single-threaded). No mutex needed.
+    let mut angle_tracker = AngleTracker::new();
 
     // 20 ms frame buffers (mono mixdown of stereo).
     let mut vad_buf = vec![0.0_f32; VAD_FRAME_LEN];
@@ -202,6 +221,7 @@ fn dsp_loop() {
                     &history_l,
                     &history_r,
                     &mut pending_capture,
+                    &mut angle_tracker,
                 ),
                 VadEdge::SpeechEnd => emit_event(
                     DspEventKind::VadEnd,
@@ -209,6 +229,7 @@ fn dsp_loop() {
                     &history_l,
                     &history_r,
                     &mut pending_capture,
+                    &mut angle_tracker,
                 ),
                 _ => {}
             }
@@ -236,9 +257,18 @@ fn dsp_loop() {
                 let tf = time_features(&stft_window_mono);
 
                 let (zone, angle, conf) = compute_spatial(&history_l, &history_r);
+                let now_ms = start_instant()
+                    .lock()
+                    .map(|t| t.elapsed().as_millis() as u64)
+                    .unwrap_or(0);
+                let (s_angle, s_conf, z_label, z_id, z_conf) = compute_phase3_extras(
+                    &mut angle_tracker, zone, angle, conf, now_ms,
+                    &history_l, &history_r,
+                );
                 let event = build_event(
                     DspEventKind::Onset,
                     mfcc_v, spec, tf, zone, angle, conf,
+                    s_angle, s_conf, z_label, z_id, z_conf,
                 );
                 queue_event(event, &history_l, &history_r, &mut pending_capture);
                 let _ = intensity;
@@ -256,9 +286,18 @@ fn dsp_loop() {
             let spec = spectral_summary(&mag, SAMPLE_RATE as f32);
             let tf = time_features(&stft_window_mono);
             let (zone, angle, conf) = compute_spatial(&history_l, &history_r);
+            let now_ms = start_instant()
+                .lock()
+                .map(|t| t.elapsed().as_millis() as u64)
+                .unwrap_or(0);
+            let (s_angle, s_conf, z_label, z_id, z_conf) = compute_phase3_extras(
+                &mut angle_tracker, zone, angle, conf, now_ms,
+                &history_l, &history_r,
+            );
             let ev = build_event(
                 DspEventKind::PeriodicSnapshot,
                 mfcc_v, spec, tf, zone, angle, conf,
+                s_angle, s_conf, z_label, z_id, z_conf,
             );
             // Snapshots don't need captured audio.
             let _ = channel().0.try_send(ev);
@@ -274,6 +313,9 @@ fn dsp_loop() {
     }
 }
 
+/// Per-event spatial snapshot. Returns the raw GCC-PHAT verdict; the
+/// caller is responsible for feeding it through the Kalman tracker so
+/// the UI sees a smoothed angle.
 fn compute_spatial(history_l: &[i16], history_r: &[i16]) -> (Zone, f32, f32) {
     if history_l.len() < STFT_N {
         return (Zone::Unknown, 0.0, 0.0);
@@ -285,6 +327,64 @@ fn compute_spatial(history_l: &[i16], history_r: &[i16]) -> (Zone, f32, f32) {
     (est.zone.into(), est.angle_deg, est.confidence)
 }
 
+/// Phase 3 per-event extras: fold the raw GCC-PHAT verdict through the
+/// Kalman tracker for a smoothed angle, and classify the current room
+/// using the trailing ~1 s of audio.
+///
+/// Order matters: the tracker is mutated, so this is called exactly once
+/// per event.
+fn compute_phase3_extras(
+    tracker: &mut AngleTracker,
+    raw_zone: Zone,
+    raw_angle: f32,
+    raw_conf: f32,
+    now_ms: u64,
+    history_l: &[i16],
+    history_r: &[i16],
+) -> (f32, f32, String, String, f32) {
+    // Angle tracker — feed only when the raw verdict is real.
+    let smoothed = match raw_zone {
+        Zone::Unknown => tracker.coast(now_ms),
+        _ => tracker.observe(raw_angle, raw_conf, now_ms),
+    };
+    let (s_angle, s_conf) = match smoothed {
+        Some(s) => (s.angle_deg, s.confidence()),
+        None => (0.0, 0.0),
+    };
+
+    // Zone classification — runs on every event regardless of stereo path.
+    let feat_vec = compute_zone_feature(history_l, history_r);
+    let mut feat = [0.0_f32; crate::dsp::zone::ZONE_FEATURE_DIM];
+    if feat_vec.len() == feat.len() {
+        feat.copy_from_slice(&feat_vec);
+    }
+    let protos = snapshot_prototypes();
+    let v = zone_classify(&feat, &protos);
+    (s_angle, s_conf, v.label, v.id, v.confidence)
+}
+
+/// Compute the room fingerprint from the trailing ~1 s of mono history.
+/// Used at every event to feed the zone classifier. Falls back to a zero
+/// vector if there isn't enough audio, which the classifier treats as
+/// "unknown room" without crashing.
+const ZONE_WINDOW_SAMPLES: usize = SAMPLE_RATE as usize; // 1 second @ 48k
+fn compute_zone_feature(history_l: &[i16], history_r: &[i16]) -> Vec<f32> {
+    let n = history_l.len();
+    if n < STFT_N {
+        return vec![0.0_f32; crate::dsp::zone::ZONE_FEATURE_DIM];
+    }
+    let take = n.min(ZONE_WINDOW_SAMPLES);
+    let start = n - take;
+    let mut mono: Vec<f32> = Vec::with_capacity(take);
+    for i in start..n {
+        let l = history_l[i] as f32 / 32768.0;
+        let r = history_r[i] as f32 / 32768.0;
+        mono.push((l + r) * 0.5);
+    }
+    zone_feature_from_audio(&mono, SAMPLE_RATE as f32).to_vec()
+}
+
+#[allow(clippy::too_many_arguments)]
 fn build_event(
     kind: DspEventKind,
     mfcc_v: Vec<f32>,
@@ -293,6 +393,11 @@ fn build_event(
     zone: Zone,
     angle: f32,
     conf: f32,
+    smoothed_angle_deg: f32,
+    smoothed_angle_confidence: f32,
+    zone_label: String,
+    zone_id: String,
+    zone_confidence: f32,
 ) -> DspEvent {
     let id = NEXT_EVENT_ID.fetch_add(1, Ordering::SeqCst);
     let ts_ms = start_instant()
@@ -313,6 +418,11 @@ fn build_event(
         zone,
         angle_deg: angle,
         spatial_confidence: conf,
+        smoothed_angle_deg,
+        smoothed_angle_confidence,
+        zone_label,
+        zone_id,
+        zone_confidence,
     }
 }
 
@@ -322,12 +432,21 @@ fn emit_event(
     history_l: &[i16],
     history_r: &[i16],
     pending: &mut Option<(u64, u64, usize)>,
+    tracker: &mut AngleTracker,
 ) {
     let mag = vec![0.0_f32; 1]; // we don't recompute here — VAD events use the latest snapshot's features
     let spec = spectral_summary(&mag, SAMPLE_RATE as f32);
     let tf = crate::dsp::features::TimeFeatures { rms: 0.0, peak_abs: 0.0, crest_factor: 0.0 };
     let (zone, angle, conf) = compute_spatial(history_l, history_r);
-    let ev = build_event(kind, vec![], spec, tf, zone, angle, conf);
+    let now_ms = start_instant()
+        .lock()
+        .map(|t| t.elapsed().as_millis() as u64)
+        .unwrap_or(0);
+    let (s_angle, s_conf, z_label, z_id, z_conf) = compute_phase3_extras(
+        tracker, zone, angle, conf, now_ms, history_l, history_r,
+    );
+    let ev = build_event(kind, vec![], spec, tf, zone, angle, conf,
+        s_angle, s_conf, z_label, z_id, z_conf);
     queue_event(ev, history_l, history_r, pending);
 }
 

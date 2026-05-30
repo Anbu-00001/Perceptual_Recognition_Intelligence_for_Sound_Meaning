@@ -1,20 +1,13 @@
-import 'dart:developer' as developer;
+// ignore_for_file: avoid_print
+//
+// Boot-phase profiler. Uses bare `print` (not `developer.log`) so the lines
+// show up under `adb logcat *:S flutter:V` without needing `--dart-define`
+// log-level plumbing. Cold-start hangs are easier to diagnose when every
+// phase prints immediately to the same stream as Flutter's own boot logs.
 
-/// Records phase-by-phase timings during app boot and emits them via
-/// `developer.log` (visible in `adb logcat -s flutter`). Used to diagnose
-/// cold-start regressions like the 60-second hang seen on OPPO A18 / ColorOS 15
-/// after `am force-stop` + relaunch.
-///
-/// Usage:
-/// ```dart
-/// final p = StartupProfiler();
-/// p.mark('main_entered');
-/// await RustLib.init();
-/// p.mark('rust_lib_init');
-/// runApp(...);
-/// p.mark('run_app');
-/// p.dump();
-/// ```
+/// Records phase-by-phase timings during app boot. Diagnoses cold-start
+/// regressions like the 60-second hang seen on OPPO A18 / ColorOS 15 after
+/// `am force-stop` + relaunch.
 class StartupProfiler {
   StartupProfiler() : _t0 = Stopwatch()..start();
 
@@ -24,17 +17,16 @@ class StartupProfiler {
 
   void mark(String name) {
     final ms = _t0.elapsedMilliseconds;
-    _phases.add(_Phase(name, ms, ms - _lastMs));
+    final delta = ms - _lastMs;
+    _phases.add(_Phase(name, ms, delta));
     _lastMs = ms;
-    developer.log('[PRISM][boot] $name @${ms}ms (+${ms - _lastMs}ms)',
-        name: 'PRISM');
+    print('[PRISM][boot] $name @${ms}ms (+${delta}ms)');
   }
 
   void dump() {
-    developer.log('[PRISM][boot] summary:', name: 'PRISM');
+    print('[PRISM][boot] summary:');
     for (final p in _phases) {
-      developer.log('  ${p.name.padRight(28)} @${p.totalMs}ms  +${p.deltaMs}ms',
-          name: 'PRISM');
+      print('  ${p.name.padRight(28)} @${p.totalMs}ms  +${p.deltaMs}ms');
     }
   }
 

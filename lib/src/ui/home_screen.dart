@@ -6,15 +6,28 @@ import '../audio/audio_service.dart';
 import '../audio/device_profile.dart';
 import '../perm/permission_gate.dart';
 import '../rust/api/audio_stream.dart' show WaveformFrame;
+import '../rust/api/dsp_pipeline.dart' as rust_dsp;
 import '../rust/api/session.dart' show SessionPaths;
+import '../spatial/room_zone_repository.dart';
+import 'spatial_overlay.dart';
 import 'waveform_painter.dart';
+import 'zone_enrollment_screen.dart';
 
 /// Phase 0 acceptance UI: one screen, two buttons, live stereo waveform.
 /// Recording produces a `session_<ts>.wav` + `imu_<ts>.csv` in app documents directory.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.deviceProfileFuture});
+  const HomeScreen({
+    super.key,
+    this.deviceProfileFuture,
+    this.roomZoneRepo,
+  });
 
   final Future<DeviceProfile>? deviceProfileFuture;
+
+  /// Phase 3: optional repository for room/zone enrollment. When null,
+  /// the "Enroll room" button is hidden and SpatialOverlay still renders
+  /// but with no zone classification.
+  final RoomZoneRepository? roomZoneRepo;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,8 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final _service = AudioService();
   final _perms = PermissionGate();
   final _frameNotifier = ValueNotifier<WaveformFrame?>(null);
+  final _eventNotifier = ValueNotifier<rust_dsp.DspEvent?>(null);
 
   StreamSubscription<WaveformFrame>? _sub;
+  Timer? _dspPoll;
   bool _capturing = false;
   bool _recording = false;
   SessionPaths? _lastSession;
@@ -80,8 +95,30 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _sub?.cancel();
+    _dspPoll?.cancel();
     _frameNotifier.dispose();
+    _eventNotifier.dispose();
     super.dispose();
+  }
+
+  /// Phase 3: poll the Rust DSP queue for the latest event so the
+  /// SpatialOverlay can render zone + smoothed-angle. We only drain one
+  /// event per tick; ScenePipeline (when enabled) drains the rest.
+  void _ensureDspPolling() {
+    _dspPoll ??= Timer.periodic(const Duration(milliseconds: 200), (_) {
+      try {
+        final ev = rust_dsp.nextDspEvent();
+        if (ev != null) _eventNotifier.value = ev;
+      } catch (_) {
+        // DSP not started yet — harmless, will pick up on next tick.
+      }
+    });
+  }
+
+  void _stopDspPolling() {
+    _dspPoll?.cancel();
+    _dspPoll = null;
+    _eventNotifier.value = null;
   }
 
   Future<void> _toggleCapture() async {
@@ -92,6 +129,12 @@ class _HomeScreenState extends State<HomeScreen> {
           await _toggleSession();
         }
         await _service.stopCapture();
+        try {
+          rust_dsp.stopDsp();
+        } catch (_) {
+          /* already stopped */
+        }
+        _stopDspPolling();
       } else {
         final granted = await _perms.ensureCaptureGranted();
         if (!granted) {
@@ -103,6 +146,12 @@ class _HomeScreenState extends State<HomeScreen> {
         // diagnostics so the UI shows the actual source (not the "none" we
         // had at first launch before any capture had run).
         unawaited(_refreshProfile());
+        try {
+          rust_dsp.startDsp();
+        } catch (_) {
+          /* already started or unavailable — keep capture UI alive */
+        }
+        _ensureDspPolling();
       }
       setState(() => _capturing = !_capturing);
     } catch (e) {
@@ -199,6 +248,20 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
               if (_shouldShowBatteryBanner()) _batteryOptBanner(theme),
               if (_capturing && _profile != null) _audioSourceLine(theme),
+              if (_capturing)
+                ValueListenableBuilder<rust_dsp.DspEvent?>(
+                  valueListenable: _eventNotifier,
+                  builder: (ctx, ev, _) => SpatialOverlay(event: ev),
+                ),
+              if (widget.roomZoneRepo != null && _capturing)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.add_home),
+                    label: const Text('Enroll this room'),
+                    onPressed: _openZoneEnrollment,
+                  ),
+                ),
               if (_error != null)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -316,6 +379,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openZoneEnrollment() async {
+    final repo = widget.roomZoneRepo;
+    if (repo == null) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => ZoneEnrollmentScreen(
+        repo: repo,
+        environment: repo.activeEnvironment,
+      ),
+    ));
   }
 
   Widget _audioSourceLine(ThemeData theme) {

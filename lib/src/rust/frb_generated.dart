@@ -7,6 +7,7 @@ import 'api/audio_stream.dart';
 import 'api/dsp_pipeline.dart';
 import 'api/enrollment.dart';
 import 'api/session.dart';
+import 'api/zone.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -67,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -1210377952;
+  int get rustContentHash => -1147572069;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -127,6 +128,22 @@ abstract class RustLibApi extends BaseApi {
   SessionPaths crateApiSessionStopSession();
 
   Int16List crateApiDspPipelineTakeEventAudio16K({required BigInt eventId});
+
+  Float32List crateApiZoneZoneCentroidFromFeatures({
+    required List<Float32List> features,
+  });
+
+  void crateApiZoneZoneClearPrototypes();
+
+  Float32List crateApiZoneZoneComputeFeature({
+    required List<int> samples16KMono,
+  });
+
+  int crateApiZoneZoneFeatureDim();
+
+  int crateApiZoneZonePrototypeCount();
+
+  int crateApiZoneZoneSetPrototypes({required List<ZonePrototypeDto> items});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -524,6 +541,154 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: ["eventId"],
       );
 
+  @override
+  Float32List crateApiZoneZoneCentroidFromFeatures({
+    required List<Float32List> features,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_list_prim_f_32_strict(features, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_f_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZoneCentroidFromFeaturesConstMeta,
+        argValues: [features],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZoneCentroidFromFeaturesConstMeta =>
+      const TaskConstMeta(
+        debugName: "zone_centroid_from_features",
+        argNames: ["features"],
+      );
+
+  @override
+  void crateApiZoneZoneClearPrototypes() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZoneClearPrototypesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZoneClearPrototypesConstMeta =>
+      const TaskConstMeta(debugName: "zone_clear_prototypes", argNames: []);
+
+  @override
+  Float32List crateApiZoneZoneComputeFeature({
+    required List<int> samples16KMono,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_i_16_loose(samples16KMono, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_f_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZoneComputeFeatureConstMeta,
+        argValues: [samples16KMono],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZoneComputeFeatureConstMeta =>
+      const TaskConstMeta(
+        debugName: "zone_compute_feature",
+        argNames: ["samples16KMono"],
+      );
+
+  @override
+  int crateApiZoneZoneFeatureDim() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZoneFeatureDimConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZoneFeatureDimConstMeta =>
+      const TaskConstMeta(debugName: "zone_feature_dim", argNames: []);
+
+  @override
+  int crateApiZoneZonePrototypeCount() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZonePrototypeCountConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZonePrototypeCountConstMeta =>
+      const TaskConstMeta(debugName: "zone_prototype_count", argNames: []);
+
+  @override
+  int crateApiZoneZoneSetPrototypes({required List<ZonePrototypeDto> items}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_zone_prototype_dto(items, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiZoneZoneSetPrototypesConstMeta,
+        argValues: [items],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiZoneZoneSetPrototypesConstMeta =>
+      const TaskConstMeta(
+        debugName: "zone_set_prototypes",
+        argNames: ["items"],
+      );
+
   @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -558,8 +723,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   DspEvent dco_decode_dsp_event(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 18)
+      throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
     return DspEvent(
       eventId: dco_decode_u_64(arr[0]),
       timestampMs: dco_decode_u_64(arr[1]),
@@ -574,6 +739,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       zone: dco_decode_zone(arr[10]),
       angleDeg: dco_decode_f_32(arr[11]),
       spatialConfidence: dco_decode_f_32(arr[12]),
+      smoothedAngleDeg: dco_decode_f_32(arr[13]),
+      smoothedAngleConfidence: dco_decode_f_32(arr[14]),
+      zoneLabel: dco_decode_String(arr[15]),
+      zoneId: dco_decode_String(arr[16]),
+      zoneConfidence: dco_decode_f_32(arr[17]),
     );
   }
 
@@ -628,6 +798,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Float32List> dco_decode_list_list_prim_f_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_list_prim_f_32_strict)
+        .toList();
+  }
+
+  @protected
   Float32List dco_decode_list_prim_f_32_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Float32List;
@@ -649,6 +827,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<ZonePrototypeDto> dco_decode_list_zone_prototype_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_zone_prototype_dto).toList();
   }
 
   @protected
@@ -731,6 +915,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ZonePrototypeDto dco_decode_zone_prototype_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ZonePrototypeDto(
+      id: dco_decode_String(arr[0]),
+      label: dco_decode_String(arr[1]),
+      centroid: dco_decode_list_prim_f_32_strict(arr[2]),
+    );
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -781,6 +978,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_zone = sse_decode_zone(deserializer);
     var var_angleDeg = sse_decode_f_32(deserializer);
     var var_spatialConfidence = sse_decode_f_32(deserializer);
+    var var_smoothedAngleDeg = sse_decode_f_32(deserializer);
+    var var_smoothedAngleConfidence = sse_decode_f_32(deserializer);
+    var var_zoneLabel = sse_decode_String(deserializer);
+    var var_zoneId = sse_decode_String(deserializer);
+    var var_zoneConfidence = sse_decode_f_32(deserializer);
     return DspEvent(
       eventId: var_eventId,
       timestampMs: var_timestampMs,
@@ -795,6 +997,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       zone: var_zone,
       angleDeg: var_angleDeg,
       spatialConfidence: var_spatialConfidence,
+      smoothedAngleDeg: var_smoothedAngleDeg,
+      smoothedAngleConfidence: var_smoothedAngleConfidence,
+      zoneLabel: var_zoneLabel,
+      zoneId: var_zoneId,
+      zoneConfidence: var_zoneConfidence,
     );
   }
 
@@ -862,6 +1069,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Float32List> sse_decode_list_list_prim_f_32_strict(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Float32List>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_list_prim_f_32_strict(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -887,6 +1108,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<ZonePrototypeDto> sse_decode_list_zone_prototype_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ZonePrototypeDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_zone_prototype_dto(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -982,6 +1217,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ZonePrototypeDto sse_decode_zone_prototype_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_label = sse_decode_String(deserializer);
+    var var_centroid = sse_decode_list_prim_f_32_strict(deserializer);
+    return ZonePrototypeDto(
+      id: var_id,
+      label: var_label,
+      centroid: var_centroid,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -1036,6 +1284,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_zone(self.zone, serializer);
     sse_encode_f_32(self.angleDeg, serializer);
     sse_encode_f_32(self.spatialConfidence, serializer);
+    sse_encode_f_32(self.smoothedAngleDeg, serializer);
+    sse_encode_f_32(self.smoothedAngleConfidence, serializer);
+    sse_encode_String(self.zoneLabel, serializer);
+    sse_encode_String(self.zoneId, serializer);
+    sse_encode_f_32(self.zoneConfidence, serializer);
   }
 
   @protected
@@ -1093,6 +1346,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_list_prim_f_32_strict(
+    List<Float32List> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_list_prim_f_32_strict(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_f_32_strict(
     Float32List self,
     SseSerializer serializer,
@@ -1132,6 +1397,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_list_zone_prototype_dto(
+    List<ZonePrototypeDto> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_zone_prototype_dto(item, serializer);
+    }
   }
 
   @protected
@@ -1217,5 +1494,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_zone(Zone self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_zone_prototype_dto(
+    ZonePrototypeDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.label, serializer);
+    sse_encode_list_prim_f_32_strict(self.centroid, serializer);
   }
 }

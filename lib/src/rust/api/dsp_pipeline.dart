@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `build_event`, `channel`, `compute_spatial`, `dsp_loop`, `emit_event`, `finalize_captures`, `queue_event`, `segments`, `start_instant`
+// These functions are ignored because they are not marked as `pub`: `build_event`, `channel`, `compute_phase3_extras`, `compute_spatial`, `compute_zone_feature`, `dsp_loop`, `emit_event`, `finalize_captures`, `queue_event`, `segments`, `start_instant`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `fmt`, `from`
 
 void startDsp() => RustLib.instance.api.crateApiDspPipelineStartDsp();
@@ -36,6 +36,21 @@ class DspEvent {
   final double angleDeg;
   final double spatialConfidence;
 
+  /// Phase 3: Kalman-smoothed angle. 0 when no fresh measurement and
+  /// no prior state — use `smoothed_angle_confidence == 0.0` as the
+  /// gate, not `angle == 0.0`, since the genuine center is 0°.
+  final double smoothedAngleDeg;
+
+  /// 0..1, derived from posterior variance. Drops as the filter coasts
+  /// without measurement updates.
+  final double smoothedAngleConfidence;
+
+  /// Phase 3: best-matching enrolled room. Empty string when no
+  /// prototype crossed the confidence/margin floor.
+  final String zoneLabel;
+  final String zoneId;
+  final double zoneConfidence;
+
   const DspEvent({
     required this.eventId,
     required this.timestampMs,
@@ -50,6 +65,11 @@ class DspEvent {
     required this.zone,
     required this.angleDeg,
     required this.spatialConfidence,
+    required this.smoothedAngleDeg,
+    required this.smoothedAngleConfidence,
+    required this.zoneLabel,
+    required this.zoneId,
+    required this.zoneConfidence,
   });
 
   @override
@@ -66,7 +86,12 @@ class DspEvent {
       crestFactor.hashCode ^
       zone.hashCode ^
       angleDeg.hashCode ^
-      spatialConfidence.hashCode;
+      spatialConfidence.hashCode ^
+      smoothedAngleDeg.hashCode ^
+      smoothedAngleConfidence.hashCode ^
+      zoneLabel.hashCode ^
+      zoneId.hashCode ^
+      zoneConfidence.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -85,7 +110,12 @@ class DspEvent {
           crestFactor == other.crestFactor &&
           zone == other.zone &&
           angleDeg == other.angleDeg &&
-          spatialConfidence == other.spatialConfidence;
+          spatialConfidence == other.spatialConfidence &&
+          smoothedAngleDeg == other.smoothedAngleDeg &&
+          smoothedAngleConfidence == other.smoothedAngleConfidence &&
+          zoneLabel == other.zoneLabel &&
+          zoneId == other.zoneId &&
+          zoneConfidence == other.zoneConfidence;
 }
 
 enum DspEventKind { vadStart, vadEnd, onset, periodicSnapshot }

@@ -9,6 +9,7 @@
 //!   - `spatial`  — GCC-PHAT cross-channel TDOA → angle estimate.
 //!   - `enrollment` (Phase 2) — clip-quality gates for enrollment recordings.
 
+pub mod angle_tracker;
 pub mod enrollment;
 pub mod fft;
 pub mod features;
@@ -16,3 +17,4 @@ pub mod mel;
 pub mod onset;
 pub mod spatial;
 pub mod vad;
+pub mod zone;

@@ -10,6 +10,7 @@ import 'api/audio_stream.dart';
 import 'api/dsp_pipeline.dart';
 import 'api/enrollment.dart';
 import 'api/session.dart';
+import 'api/zone.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -60,6 +61,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_i_32(dynamic raw);
 
   @protected
+  List<Float32List> dco_decode_list_list_prim_f_32_strict(dynamic raw);
+
+  @protected
   Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
 
   @protected
@@ -70,6 +74,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<ZonePrototypeDto> dco_decode_list_zone_prototype_dto(dynamic raw);
 
   @protected
   DspEvent? dco_decode_opt_box_autoadd_dsp_event(dynamic raw);
@@ -102,6 +109,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Zone dco_decode_zone(dynamic raw);
+
+  @protected
+  ZonePrototypeDto dco_decode_zone_prototype_dto(dynamic raw);
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
@@ -146,6 +156,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  List<Float32List> sse_decode_list_list_prim_f_32_strict(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
 
   @protected
@@ -156,6 +171,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<ZonePrototypeDto> sse_decode_list_zone_prototype_dto(
+    SseDeserializer deserializer,
+  );
 
   @protected
   DspEvent? sse_decode_opt_box_autoadd_dsp_event(SseDeserializer deserializer);
@@ -190,6 +210,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Zone sse_decode_zone(SseDeserializer deserializer);
+
+  @protected
+  ZonePrototypeDto sse_decode_zone_prototype_dto(SseDeserializer deserializer);
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
@@ -243,6 +266,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_list_prim_f_32_strict(
+    List<Float32List> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_f_32_strict(
     Float32List self,
     SseSerializer serializer,
@@ -263,6 +292,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_zone_prototype_dto(
+    List<ZonePrototypeDto> self,
     SseSerializer serializer,
   );
 
@@ -304,6 +339,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_zone(Zone self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_zone_prototype_dto(
+    ZonePrototypeDto self,
+    SseSerializer serializer,
+  );
 }
 
 // Section: wire_class
